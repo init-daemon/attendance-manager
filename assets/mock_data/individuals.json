@@ -1,0 +1,23 @@
+[
+  {
+    "id": "1",
+    "firstName": "Jean",
+    "lastName": "Dupont",
+    "birthDate": "1990-05-15",
+    "isHidden": false
+  },
+  {
+    "id": "2",
+    "firstName": "Marie",
+    "lastName": "Martin",
+    "birthDate": "1985-11-22",
+    "isHidden": false
+  },
+  {
+    "id": "3",
+    "firstName": "Pierre",
+    "lastName": "Durand",
+    "birthDate": "1978-03-08",
+    "isHidden": true
+  }
+]
