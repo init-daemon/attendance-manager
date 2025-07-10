@@ -4,8 +4,6 @@ import '../services/mock_data_service.dart';
 import '../models/individual.dart';
 import 'individual_create_screen.dart';
 
-// import 'individual_create_screen.dart';
-
 class IndividualsListScreen extends StatefulWidget {
   const IndividualsListScreen({super.key});
 
@@ -23,7 +21,6 @@ class _IndividualsListScreenState extends State<IndividualsListScreen> {
   }
 
   void _navigateToCreateScreen(BuildContext context) {
-    print('click');
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const IndividualCreateScreen()),

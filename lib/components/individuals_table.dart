@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/individual.dart';
 import '../screens/individual_edit_screen.dart';
+import '../screens/individual_view_screen.dart';
 
 class IndividualsTable extends StatelessWidget {
   final List<Individual> individuals;
@@ -30,7 +31,13 @@ class IndividualsTable extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.visibility),
                       onPressed: () {
-                        // TODO: Naviguer vers l'écran de visualisation
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                IndividualViewScreen(individual: individual),
+                          ),
+                        );
                       },
                     ),
                     IconButton(

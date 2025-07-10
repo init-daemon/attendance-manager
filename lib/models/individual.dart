@@ -12,4 +12,10 @@ class Individual {
     required this.birthDate,
     this.isHidden = false,
   });
+
+  String get initials {
+    final first = firstName.isNotEmpty ? firstName[0] : '';
+    final last = lastName.isNotEmpty ? lastName[0] : '';
+    return '$first$last'.toUpperCase();
+  }
 }
