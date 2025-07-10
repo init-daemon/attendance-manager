@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../models/individual.dart';
-import '../screens/individual_edit_screen.dart';
-import '../screens/individual_view_screen.dart';
+import '../../models/individual.dart';
+import '../../screens/individual/individual_edit_screen.dart';
+import '../../screens/individual/individual_view_screen.dart';
 
 class IndividualsTable extends StatelessWidget {
   final List<Individual> individuals;

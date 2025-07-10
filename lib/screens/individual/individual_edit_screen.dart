@@ -1,7 +1,7 @@
 // lib/screens/individual_edit_screen.dart
 import 'package:flutter/material.dart';
-import '../components/individual_form.dart';
-import '../models/individual.dart';
+import '../../components/individual/individual_form.dart';
+import '../../models/individual.dart';
 
 class IndividualEditScreen extends StatelessWidget {
   final Individual individual;

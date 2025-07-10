@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../components/individuals_table.dart';
-import '../services/mock_data_service.dart';
-import '../models/individual.dart';
+import '../../components/individual/individuals_table.dart';
+import '../../services/mock_data_service.dart';
+import '../../models/individual.dart';
 import 'individual_create_screen.dart';
 
 class IndividualsListScreen extends StatefulWidget {

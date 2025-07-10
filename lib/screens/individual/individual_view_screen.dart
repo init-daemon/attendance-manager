@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../models/individual.dart';
-import '../components/profile_avatar.dart';
-import '../screens/individual_edit_screen.dart';
+import '../../models/individual.dart';
+import '../../components/individual/profile_avatar.dart';
+import 'individual_edit_screen.dart';
 
 class IndividualViewScreen extends StatelessWidget {
   final Individual individual;

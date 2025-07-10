@@ -1,6 +1,6 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
-import 'package:presence_manager/screens/individuals_list_screen.dart';
+import 'package:presence_manager/screens/individual/individuals_list_screen.dart';
 
 void main() {
   runApp(const PresenceManagerApp());
