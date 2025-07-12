@@ -18,4 +18,24 @@ class Individual {
     final last = lastName.isNotEmpty ? lastName[0] : '';
     return '$first$last'.toUpperCase();
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'firstName': firstName,
+      'lastName': lastName,
+      'birthDate': birthDate.toIso8601String(),
+      'isHidden': isHidden ? 1 : 0,
+    };
+  }
+
+  factory Individual.fromMap(Map<String, dynamic> map) {
+    return Individual(
+      id: map['id'],
+      firstName: map['firstName'],
+      lastName: map['lastName'],
+      birthDate: DateTime.parse(map['birthDate']),
+      isHidden: map['isHidden'] == 1,
+    );
+  }
 }

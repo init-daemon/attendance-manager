@@ -1,22 +1,18 @@
-import 'dart:convert';
-import 'package:flutter/services.dart';
 import '../features/individual/models/individual.dart';
+import 'individual_db_service.dart';
 
 class MockDataService {
   static Future<List<Individual>> loadIndividuals() async {
-    final jsonString = await rootBundle.loadString(
-      'assets/mock_data/individuals.json',
-    );
-    final List<dynamic> jsonData = json.decode(jsonString);
-
-    return jsonData
+    final db = await IndividualDbService.database;
+    final List<Map<String, dynamic>> maps = await db.query('individuals');
+    return maps
         .map(
           (item) => Individual(
             id: item['id'],
             firstName: item['firstName'],
             lastName: item['lastName'],
             birthDate: DateTime.parse(item['birthDate']),
-            isHidden: item['isHidden'],
+            isHidden: item['isHidden'] == 1,
           ),
         )
         .toList();
