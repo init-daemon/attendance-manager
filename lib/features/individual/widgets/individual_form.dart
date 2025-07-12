@@ -1,6 +1,6 @@
 // lib/components/individual_form.dart
 import 'package:flutter/material.dart';
-import '../../models/individual.dart';
+import '../models/individual.dart';
 
 class IndividualForm extends StatefulWidget {
   final Individual? individual;

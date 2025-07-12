@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
-import '../../models/individual.dart';
-import '../../components/individual/profile_avatar.dart';
-import 'individual_edit_screen.dart';
+import '../models/individual.dart';
+import '../widgets/profile_avatar.dart';
+import '../../../core/widgets/app_layout.dart'; // Import du layout commun
+import '../../individual/screens/individual_edit_screen.dart';
 
 class IndividualViewScreen extends StatelessWidget {
   final Individual individual;
-  final Function(Individual)? onEdit;
+  static const String routeName = '/individuals/view'; // Nom de route constant
 
-  const IndividualViewScreen({
-    super.key,
-    required this.individual,
-    this.onEdit,
-  });
+  const IndividualViewScreen({super.key, required this.individual});
 
   String get initials =>
       '${individual.firstName.isNotEmpty ? individual.firstName[0] : ''}'
@@ -19,16 +16,14 @@ class IndividualViewScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Détails de l\'individu'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () => _navigateToEditScreen(context),
-          ),
-        ],
-      ),
+    return AppLayout(
+      title: 'Détails de l\'individu',
+      appBarActions: [
+        IconButton(
+          icon: const Icon(Icons.edit),
+          onPressed: () => _navigateToEditScreen(context),
+        ),
+      ],
       body: SingleChildScrollView(
         child: Center(
           child: Column(
@@ -80,15 +75,19 @@ class IndividualViewScreen extends StatelessWidget {
   }
 
   void _navigateToEditScreen(BuildContext context) {
-    Navigator.push(
+    Navigator.pushNamed(
       context,
-      MaterialPageRoute(
-        builder: (context) => IndividualEditScreen(individual: individual),
-      ),
+      IndividualEditScreen.routeName,
+      arguments: individual,
     ).then((updatedIndividual) {
-      if (updatedIndividual != null && onEdit != null) {
-        onEdit!(updatedIndividual);
+      if (updatedIndividual != null && updatedIndividual is Individual) {
+        Navigator.pop(context, updatedIndividual);
       }
     });
+  }
+
+  // Méthode statique pour faciliter la navigation
+  static void navigate(BuildContext context, Individual individual) {
+    Navigator.pushNamed(context, routeName, arguments: individual);
   }
 }

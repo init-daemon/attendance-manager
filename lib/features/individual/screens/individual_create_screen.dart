@@ -1,7 +1,7 @@
 // lib/screens/individual_create_screen.dart
 import 'package:flutter/material.dart';
-import '../../components/individual/individual_form.dart';
-import '../../models/individual.dart';
+import '../widgets/individual_form.dart';
+import '../models/individual.dart';
 
 class IndividualCreateScreen extends StatefulWidget {
   const IndividualCreateScreen({super.key});
@@ -12,10 +12,6 @@ class IndividualCreateScreen extends StatefulWidget {
 
 class _IndividualCreateScreenState extends State<IndividualCreateScreen> {
   void _saveIndividual(Individual individual) {
-    // TODO: Implémenter la sauvegarde
-    print(
-      'Nouvel individu créé: ${individual.lastName} ${individual.firstName}',
-    );
     Navigator.pop(context);
   }
 

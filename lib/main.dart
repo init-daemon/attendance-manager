@@ -1,6 +1,6 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
-import 'package:presence_manager/screens/individual/individuals_list_screen.dart';
+import 'package:presence_manager/core/app/app_router.dart';
 
 void main() {
   runApp(const PresenceManagerApp());
@@ -12,11 +12,13 @@ class PresenceManagerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Gestion de Présence',
+      title: 'Presence Manager',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
       ),
-      home: const IndividualsListScreen(),
+      onGenerateRoute: AppRouter.generateRoute,
+      initialRoute: '/individuals',
     );
   }
 }

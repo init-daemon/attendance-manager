@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../components/individual/individuals_table.dart';
-import '../../services/mock_data_service.dart';
-import '../../models/individual.dart';
+import '../widgets/individuals_table.dart';
+import '../../../services/mock_data_service.dart';
+import '../models/individual.dart';
 import 'individual_create_screen.dart';
+import 'package:presence_manager/core/widgets/app_layout.dart';
 
 class IndividualsListScreen extends StatefulWidget {
   const IndividualsListScreen({super.key});
@@ -29,17 +30,8 @@ class _IndividualsListScreenState extends State<IndividualsListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Liste des Individus'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: 'Créer un nouvel individu',
-            onPressed: () => _navigateToCreateScreen(context),
-          ),
-        ],
-      ),
+    return AppLayout(
+      title: 'Liste des Individus',
       body: FutureBuilder<List<Individual>>(
         future: _individualsFuture,
         builder: (context, snapshot) {
@@ -48,14 +40,30 @@ class _IndividualsListScreenState extends State<IndividualsListScreen> {
           } else if (snapshot.hasError) {
             return Center(child: Text('Erreur: ${snapshot.error}'));
           } else {
-            return IndividualsTable(individuals: snapshot.data!);
+            return Column(
+              children: [
+                Expanded(child: IndividualsTable(individuals: snapshot.data!)),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: FloatingActionButton.extended(
+                    onPressed: () => _navigateToCreateScreen(context),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Créer un individu'),
+                  ),
+                ),
+              ],
+            );
           }
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToCreateScreen(context),
-        child: const Icon(Icons.add),
-      ),
+      // On retire le Scaffold original car il est maintenant dans AppLayout
+      // On conserve les actions dans l'AppBar via AppLayout
+      appBarActions: [
+        IconButton(
+          icon: const Icon(Icons.add),
+          onPressed: () => _navigateToCreateScreen(context),
+        ),
+      ],
     );
   }
 }
