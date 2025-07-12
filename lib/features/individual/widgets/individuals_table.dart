@@ -5,8 +5,9 @@ import '../screens/individual_view_screen.dart';
 
 class IndividualsTable extends StatelessWidget {
   final List<Individual> individuals;
+  final VoidCallback? onEdit;
 
-  const IndividualsTable({super.key, required this.individuals});
+  const IndividualsTable({super.key, required this.individuals, this.onEdit});
 
   @override
   Widget build(BuildContext context) {
@@ -48,13 +49,8 @@ class IndividualsTable extends StatelessWidget {
                           '/individuals/edit',
                           arguments: individual,
                         );
-
                         if (result != null && result is Individual) {
-                          // Mettez à jour votre liste si besoin
-                          // setState(() {
-                          //   individuals[individuals.indexOf(individual)] =
-                          //       result;
-                          // });
+                          if (onEdit != null) onEdit!();
                         }
                       },
                     ),

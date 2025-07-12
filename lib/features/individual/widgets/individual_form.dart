@@ -90,7 +90,9 @@ class _IndividualFormState extends State<IndividualForm> {
             onPressed: () {
               if (_formKey.currentState!.validate()) {
                 final individual = Individual(
-                  id: widget.individual?.id ?? DateTime.now().toString(),
+                  id:
+                      widget.individual?.id ??
+                      DateTime.now().millisecondsSinceEpoch.toString(),
                   firstName: _firstNameController.text,
                   lastName: _lastNameController.text,
                   birthDate: _birthDate,

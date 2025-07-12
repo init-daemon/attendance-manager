@@ -1,8 +1,16 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:presence_manager/core/app/app_router.dart';
+import 'package:presence_manager/services/individual_db_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final individuals = await IndividualDbService.getAllIndividuals();
+
+  if (individuals.isEmpty) {
+    await IndividualDbService.seedDatabase(count: 10);
+  }
   runApp(const PresenceManagerApp());
 }
 
