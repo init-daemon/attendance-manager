@@ -21,11 +21,18 @@ class _IndividualsListScreenState extends State<IndividualsListScreen> {
     _individualsFuture = MockDataService.loadIndividuals();
   }
 
-  void _navigateToCreateScreen(BuildContext context) {
-    Navigator.push(
+  void _refreshIndividuals() {
+    setState(() {
+      _individualsFuture = MockDataService.loadIndividuals();
+    });
+  }
+
+  void _navigateToCreateScreen(BuildContext context) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const IndividualCreateScreen()),
     );
+    _refreshIndividuals();
   }
 
   @override
@@ -42,7 +49,12 @@ class _IndividualsListScreenState extends State<IndividualsListScreen> {
           } else {
             return Column(
               children: [
-                Expanded(child: IndividualsTable(individuals: snapshot.data!)),
+                Expanded(
+                  child: IndividualsTable(
+                    individuals: snapshot.data!,
+                    onEdit: _refreshIndividuals, // Ajouté pour l'édition
+                  ),
+                ),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: FloatingActionButton.extended(

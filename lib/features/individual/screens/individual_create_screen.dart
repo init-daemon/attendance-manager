@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/individual_form.dart';
 import '../models/individual.dart';
+import '../../../services/individual_db_service.dart';
 
 class IndividualCreateScreen extends StatefulWidget {
   const IndividualCreateScreen({super.key});
@@ -11,7 +12,8 @@ class IndividualCreateScreen extends StatefulWidget {
 }
 
 class _IndividualCreateScreenState extends State<IndividualCreateScreen> {
-  void _saveIndividual(Individual individual) {
+  void _saveIndividual(Individual individual) async {
+    await IndividualDbService.insertIndividual(individual);
     Navigator.pop(context);
   }
 

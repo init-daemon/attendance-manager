@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:presence_manager/features/individual/screens/individual_view_screen.dart';
 import '../widgets/individual_form.dart';
 import '../models/individual.dart';
+import '../../../services/individual_db_service.dart';
 
 class IndividualEditScreen extends StatelessWidget {
   final Individual individual;
@@ -30,7 +31,11 @@ class IndividualEditScreen extends StatelessWidget {
       ),
       body: IndividualForm(
         individual: individual,
-        onSave: (updated) => Navigator.pop(context, updated),
+        onSave: (updated) async {
+          await IndividualDbService.updateIndividual(updated);
+
+          Navigator.pop(context, updated);
+        },
       ),
     );
   }
