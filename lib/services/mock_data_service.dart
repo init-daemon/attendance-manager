@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
-import '../models/individual.dart';
+import '../features/individual/models/individual.dart';
 
 class MockDataService {
   static Future<List<Individual>> loadIndividuals() async {

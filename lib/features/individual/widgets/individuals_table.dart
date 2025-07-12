@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../models/individual.dart';
-import '../../screens/individual/individual_edit_screen.dart';
-import '../../screens/individual/individual_view_screen.dart';
+import '../models/individual.dart';
+// import '../screens/individual_edit_screen.dart';
+import '../screens/individual_view_screen.dart';
 
 class IndividualsTable extends StatelessWidget {
   final List<Individual> individuals;
@@ -42,18 +42,20 @@ class IndividualsTable extends StatelessWidget {
                     ),
                     IconButton(
                       icon: const Icon(Icons.edit),
-                      onPressed: () {
-                        Navigator.push(
+                      onPressed: () async {
+                        final result = await Navigator.pushNamed(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                IndividualEditScreen(individual: individual),
-                          ),
-                        ).then((updatedIndividual) {
-                          if (updatedIndividual != null) {
-                            // TODO: Mettre à jour la liste des individus
-                          }
-                        });
+                          '/individuals/edit',
+                          arguments: individual,
+                        );
+
+                        if (result != null && result is Individual) {
+                          // Mettez à jour votre liste si besoin
+                          // setState(() {
+                          //   individuals[individuals.indexOf(individual)] =
+                          //       result;
+                          // });
+                        }
                       },
                     ),
                     IconButton(
