@@ -5,6 +5,8 @@ import '../../features/individual/screens/individual_create_screen.dart';
 import '../../features/individual/screens/individual_view_screen.dart';
 import '../../features/individual/screens/individual_edit_screen.dart';
 import '../../features/individual/models/individual.dart';
+import '../widgets/error_page.dart';
+import '../widgets/app_layout.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -27,11 +29,17 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => IndividualEditScreen(individual: individual),
         );
+      case '/error':
+        final message = settings.arguments as String?;
+        return MaterialPageRoute(
+          builder: (_) => AppLayout(
+            title: 'Erreur',
+            body: ErrorPage(message: message),
+          ),
+        );
       default:
         return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            body: Center(child: Text('Route non trouvée: ${settings.name}')),
-          ),
+          builder: (_) => AppLayout(title: 'Erreur', body: const ErrorPage()),
         );
     }
   }
