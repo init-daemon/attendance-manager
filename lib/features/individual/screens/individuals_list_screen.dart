@@ -52,7 +52,7 @@ class _IndividualsListScreenState extends State<IndividualsListScreen> {
                 Expanded(
                   child: IndividualsTable(
                     individuals: snapshot.data!,
-                    onEdit: _refreshIndividuals, // Ajouté pour l'édition
+                    onEdit: _refreshIndividuals,
                   ),
                 ),
                 Padding(
@@ -68,8 +68,6 @@ class _IndividualsListScreenState extends State<IndividualsListScreen> {
           }
         },
       ),
-      // On retire le Scaffold original car il est maintenant dans AppLayout
-      // On conserve les actions dans l'AppBar via AppLayout
       appBarActions: [
         IconButton(
           icon: const Icon(Icons.add),

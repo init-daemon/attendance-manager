@@ -13,59 +13,62 @@ class IndividualsTable extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      child: DataTable(
-        columns: const [
-          DataColumn(label: Text('Nom')),
-          DataColumn(label: Text('Prénom')),
-          DataColumn(label: Text('Date de naissance')),
-          DataColumn(label: Text('Actions')),
-        ],
-        rows: individuals.map((individual) {
-          return DataRow(
-            cells: [
-              DataCell(Text(individual.lastName)),
-              DataCell(Text(individual.firstName)),
-              DataCell(Text(individual.birthDate.toString())),
-              DataCell(
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.visibility),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                IndividualViewScreen(individual: individual),
-                          ),
-                        );
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () async {
-                        final result = await Navigator.pushNamed(
-                          context,
-                          '/individuals/edit',
-                          arguments: individual,
-                        );
-                        if (result != null && result is Individual) {
-                          if (onEdit != null) onEdit!();
-                        }
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.hide_image),
-                      onPressed: () {
-                        // TODO: Gérer le hide
-                      },
-                    ),
-                  ],
+      child: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: DataTable(
+          columns: const [
+            DataColumn(label: Text('Nom')),
+            DataColumn(label: Text('Prénom')),
+            DataColumn(label: Text('Date de naissance')),
+            DataColumn(label: Text('Actions')),
+          ],
+          rows: individuals.map((individual) {
+            return DataRow(
+              cells: [
+                DataCell(Text(individual.lastName)),
+                DataCell(Text(individual.firstName)),
+                DataCell(Text(individual.birthDate.toString())),
+                DataCell(
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.visibility),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  IndividualViewScreen(individual: individual),
+                            ),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () async {
+                          final result = await Navigator.pushNamed(
+                            context,
+                            '/individuals/edit',
+                            arguments: individual,
+                          );
+                          if (result != null && result is Individual) {
+                            if (onEdit != null) onEdit!();
+                          }
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.hide_image),
+                        onPressed: () {
+                          // TODO: Gérer le hide
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          );
-        }).toList(),
+              ],
+            );
+          }).toList(),
+        ),
       ),
     );
   }
