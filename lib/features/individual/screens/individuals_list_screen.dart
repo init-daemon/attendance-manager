@@ -57,10 +57,29 @@ class _IndividualsListScreenState extends State<IndividualsListScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: FloatingActionButton.extended(
-                    onPressed: () => _navigateToCreateScreen(context),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Créer un individu'),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      FloatingActionButton.extended(
+                        onPressed: () => _navigateToCreateScreen(context),
+                        icon: const Icon(Icons.add),
+                        label: const Text('Créer un individu'),
+                      ),
+                      const SizedBox(width: 16),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          throw Exception(
+                            'Test Exception: Ceci est une erreur volontaire',
+                          );
+                        },
+                        icon: const Icon(Icons.error),
+                        label: const Text('Test Erreur'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
