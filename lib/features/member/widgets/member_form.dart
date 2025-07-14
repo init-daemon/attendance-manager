@@ -1,18 +1,17 @@
-// lib/components/individual_form.dart
 import 'package:flutter/material.dart';
-import '../models/individual.dart';
+import '../models/member.dart';
 
-class IndividualForm extends StatefulWidget {
-  final Individual? individual;
-  final Function(Individual) onSave;
+class MemberForm extends StatefulWidget {
+  final Member? member;
+  final Function(Member) onSave;
 
-  const IndividualForm({super.key, this.individual, required this.onSave});
+  const MemberForm({super.key, this.member, required this.onSave});
 
   @override
-  State<IndividualForm> createState() => _IndividualFormState();
+  State<MemberForm> createState() => _MemberFormState();
 }
 
-class _IndividualFormState extends State<IndividualForm> {
+class _MemberFormState extends State<MemberForm> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
@@ -23,13 +22,13 @@ class _IndividualFormState extends State<IndividualForm> {
   void initState() {
     super.initState();
     _firstNameController = TextEditingController(
-      text: widget.individual?.firstName ?? '',
+      text: widget.member?.firstName ?? '',
     );
     _lastNameController = TextEditingController(
-      text: widget.individual?.lastName ?? '',
+      text: widget.member?.lastName ?? '',
     );
-    _birthDate = widget.individual?.birthDate ?? DateTime.now();
-    _isHidden = widget.individual?.isHidden ?? false;
+    _birthDate = widget.member?.birthDate ?? DateTime.now();
+    _isHidden = widget.member?.isHidden ?? false;
   }
 
   @override
@@ -89,16 +88,16 @@ class _IndividualFormState extends State<IndividualForm> {
           ElevatedButton(
             onPressed: () {
               if (_formKey.currentState!.validate()) {
-                final individual = Individual(
+                final member = Member(
                   id:
-                      widget.individual?.id ??
+                      widget.member?.id ??
                       DateTime.now().millisecondsSinceEpoch.toString(),
                   firstName: _firstNameController.text,
                   lastName: _lastNameController.text,
                   birthDate: _birthDate,
                   isHidden: _isHidden,
                 );
-                widget.onSave(individual);
+                widget.onSave(member);
               }
             },
             child: const Text('Enregistrer'),

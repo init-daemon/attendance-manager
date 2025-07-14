@@ -1,18 +1,23 @@
-// lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:presence_manager/core/app/app_router.dart';
-import 'package:presence_manager/services/individual_db_service.dart';
-import 'core/utils/logger.dart';
+import 'package:presence_manager/services/db_service.dart';
+import 'package:presence_manager/core/utils/logger.dart';
+import 'dart:io';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite/sqflite.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final individuals = await IndividualDbService.getAllIndividuals();
-
-  if (individuals.isEmpty) {
-    await IndividualDbService.seedDatabase(count: 10);
+  if (!Platform.isAndroid && !Platform.isIOS) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
   }
+
+  print('Database path: ' + await getDatabasesPath());
+
+  await DbService.initialize(fresh: true);
 
   FlutterError.onError = (FlutterErrorDetails details) async {
     FlutterError.presentError(details);
@@ -45,7 +50,7 @@ class PresenceManagerApp extends StatelessWidget {
       ),
       navigatorKey: navigatorKey,
       onGenerateRoute: AppRouter.generateRoute,
-      initialRoute: '/individuals',
+      initialRoute: '/members',
     );
   }
 }

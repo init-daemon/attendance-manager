@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import '../models/individual.dart';
-// import '../screens/individual_edit_screen.dart';
-import '../screens/individual_view_screen.dart';
+import '../models/member.dart';
+import '../screens/member_view_screen.dart';
 
-class IndividualsTable extends StatelessWidget {
-  final List<Individual> individuals;
+class MembersTable extends StatelessWidget {
+  final List<Member> members;
   final VoidCallback? onEdit;
 
-  const IndividualsTable({super.key, required this.individuals, this.onEdit});
+  const MembersTable({super.key, required this.members, this.onEdit});
 
   @override
   Widget build(BuildContext context) {
@@ -22,12 +21,12 @@ class IndividualsTable extends StatelessWidget {
             DataColumn(label: Text('Date de naissance')),
             DataColumn(label: Text('Actions')),
           ],
-          rows: individuals.map((individual) {
+          rows: members.map((member) {
             return DataRow(
               cells: [
-                DataCell(Text(individual.lastName)),
-                DataCell(Text(individual.firstName)),
-                DataCell(Text(individual.birthDate.toString())),
+                DataCell(Text(member.lastName)),
+                DataCell(Text(member.firstName)),
+                DataCell(Text(member.birthDate.toString())),
                 DataCell(
                   Row(
                     children: [
@@ -38,7 +37,7 @@ class IndividualsTable extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  IndividualViewScreen(individual: individual),
+                                  MemberViewScreen(member: member),
                             ),
                           );
                         },
@@ -48,10 +47,10 @@ class IndividualsTable extends StatelessWidget {
                         onPressed: () async {
                           final result = await Navigator.pushNamed(
                             context,
-                            '/individuals/edit',
-                            arguments: individual,
+                            '/members/edit',
+                            arguments: member,
                           );
-                          if (result != null && result is Individual) {
+                          if (result != null && result is Member) {
                             if (onEdit != null) onEdit!();
                           }
                         },
