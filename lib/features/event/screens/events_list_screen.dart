@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:presence_manager/services/event_table_service.dart';
-import '../widgets/events_table.dart';
-import '../models/event.dart';
-import 'event_create_screen.dart';
 import 'package:presence_manager/core/widgets/app_layout.dart';
+import 'package:presence_manager/features/event/widgets/events_table.dart';
+import 'package:presence_manager/services/event_table_service.dart';
+import 'package:presence_manager/features/event/models/event.dart';
+import 'package:presence_manager/features/event/screens/event_create_screen.dart';
 
 class EventsListScreen extends StatefulWidget {
   const EventsListScreen({super.key});
@@ -57,10 +57,15 @@ class _EventsListScreenState extends State<EventsListScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: FloatingActionButton.extended(
-                    onPressed: () => _navigateToCreateScreen(context),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Créer un événement'),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      FloatingActionButton.extended(
+                        onPressed: () => _navigateToCreateScreen(context),
+                        icon: const Icon(Icons.add),
+                        label: const Text('Créer un événement'),
+                      ),
+                    ],
                   ),
                 ),
               ],

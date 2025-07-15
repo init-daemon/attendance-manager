@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../widgets/members_table.dart';
-import '../../../services/mock_data_service.dart';
-import '../models/member.dart';
-import 'member_create_screen.dart';
+import 'package:presence_manager/features/member/widgets/members_table.dart';
+import 'package:presence_manager/services/mock_data_service.dart';
+import 'package:presence_manager/features/member/models/member.dart';
+import 'package:presence_manager/features/member/screens/member_create_screen.dart';
 import 'package:presence_manager/core/widgets/app_layout.dart';
 
 class MembersListScreen extends StatefulWidget {

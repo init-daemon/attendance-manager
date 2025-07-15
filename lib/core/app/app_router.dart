@@ -2,16 +2,16 @@
 import 'package:flutter/material.dart';
 import 'package:presence_manager/features/member/screens/members_list_screen.dart';
 import 'package:presence_manager/features/event/screens/events_list_screen.dart';
-import '../../features/member/screens/member_create_screen.dart';
-import '../../features/member/screens/member_view_screen.dart';
-import '../../features/member/screens/member_edit_screen.dart';
-import '../../features/member/models/member.dart';
-import '../../features/event/screens/event_create_screen.dart';
-import '../../features/event/screens/event_view_screen.dart';
-import '../../features/event/screens/event_edit_screen.dart';
-import '../../features/event/models/event.dart';
-import '../widgets/error_page.dart';
-import '../widgets/app_layout.dart';
+import 'package:presence_manager/features/member/screens/member_create_screen.dart';
+import 'package:presence_manager/features/member/screens/member_view_screen.dart';
+import 'package:presence_manager/features/member/screens/member_edit_screen.dart';
+import 'package:presence_manager/features/member/models/member.dart';
+import 'package:presence_manager/features/event/screens/event_create_screen.dart';
+import 'package:presence_manager/features/event/screens/event_view_screen.dart';
+import 'package:presence_manager/features/event/screens/event_edit_screen.dart';
+import 'package:presence_manager/features/event/models/event.dart';
+import 'package:presence_manager/core/widgets/error_page.dart';
+import 'package:presence_manager/core/widgets/app_layout.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {

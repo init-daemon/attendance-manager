@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/event.dart';
+import 'package:presence_manager/features/event/models/event.dart';
 
 class EventForm extends StatefulWidget {
   final Event? event;
@@ -36,6 +36,21 @@ class _EventFormState extends State<EventForm> {
               }
               return null;
             },
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (_formKey.currentState!.validate()) {
+                final event = Event(
+                  id:
+                      widget.event?.id ??
+                      DateTime.now().millisecondsSinceEpoch.toString(),
+                  name: _nameController.text,
+                  createdAt: widget.event?.createdAt ?? DateTime.now(),
+                );
+                widget.onSave(event);
+              }
+            },
+            child: const Text('Enregistrer'),
           ),
         ],
       ),

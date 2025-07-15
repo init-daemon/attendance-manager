@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:presence_manager/features/member/screens/member_view_screen.dart';
-import '../widgets/member_form.dart';
-import '../models/member.dart';
-import '../../../services/member_table_service.dart';
+import 'package:presence_manager/features/member/widgets/member_form.dart';
+import 'package:presence_manager/features/member/models/member.dart';
+import 'package:presence_manager/services/member_table_service.dart';
 
 class MemberEditScreen extends StatelessWidget {
   final Member member;
