@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/member.dart';
-import '../screens/member_view_screen.dart';
+import 'package:presence_manager/features/member/models/member.dart';
+import 'package:presence_manager/features/member/screens/member_view_screen.dart';
 
 class MembersTable extends StatelessWidget {
   final List<Member> members;

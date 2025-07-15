@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/member.dart';
+import 'package:presence_manager/features/member/models/member.dart';
 
 class MemberForm extends StatefulWidget {
   final Member? member;

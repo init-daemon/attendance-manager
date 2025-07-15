@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../widgets/event_form.dart';
-import '../models/event.dart';
-import '../../../services/event_table_service.dart';
+import 'package:presence_manager/features/event/widgets/event_form.dart';
+import 'package:presence_manager/features/event/models/event.dart';
+import 'package:presence_manager/services/event_table_service.dart';
 
 class EventCreateScreen extends StatefulWidget {
   const EventCreateScreen({super.key});

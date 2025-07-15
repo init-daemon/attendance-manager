@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/event.dart';
-import '../screens/event_view_screen.dart';
+import 'package:presence_manager/features/event/models/event.dart';
+import 'package:presence_manager/features/event/screens/event_view_screen.dart';
 
 class EventsTable extends StatelessWidget {
   final List<Event> events;

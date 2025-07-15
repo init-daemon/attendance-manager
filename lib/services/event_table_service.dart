@@ -1,7 +1,7 @@
 import 'package:faker/faker.dart';
 import 'package:sqflite/sqflite.dart';
-import '../features/event/models/event.dart';
-import 'app_db_service.dart';
+import 'package:presence_manager/features/event/models/event.dart';
+import 'package:presence_manager/services/app_db_service.dart';
 
 class EventTableService {
   static Future<void> createTable(Database db) async {

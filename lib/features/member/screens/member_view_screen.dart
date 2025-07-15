@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../models/member.dart';
-import '../widgets/profile_avatar.dart';
-import '../../../core/widgets/app_layout.dart';
-import '../../member/screens/member_edit_screen.dart';
+import 'package:presence_manager/features/member/models/member.dart';
+import 'package:presence_manager/features/member/widgets/profile_avatar.dart';
+import 'package:presence_manager/core/widgets/app_layout.dart';
+import 'package:presence_manager/features/member/screens/member_edit_screen.dart';
 
 class MemberViewScreen extends StatelessWidget {
   final Member member;
