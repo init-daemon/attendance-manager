@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:presence_manager/features/event_organization/widgets/event_organizations_table.dart';
 import 'package:presence_manager/services/event_organization_table_service.dart';
 import 'package:presence_manager/features/event_organization/models/event_organization.dart';
+import 'package:presence_manager/core/widgets/app_layout.dart';
 
 class EventOrganizationsListScreen extends StatefulWidget {
   const EventOrganizationsListScreen({super.key});
@@ -34,8 +35,8 @@ class _EventOrganizationsListScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Organisations d\'événement')),
+    return AppLayout(
+      title: 'Organisations d\'événement',
       body: FutureBuilder<List<EventOrganization>>(
         future: _orgsFuture,
         builder: (context, snapshot) {
@@ -60,7 +61,7 @@ class _EventOrganizationsListScreenState
                       FloatingActionButton.extended(
                         onPressed: () => _navigateToCreate(context),
                         icon: const Icon(Icons.add),
-                        label: const Text('Nouvelle organisation'),
+                        label: const Text('Organiser un évènement'),
                       ),
                     ],
                   ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:presence_manager/features/event_organization/models/event_organization.dart';
 import 'package:presence_manager/services/event_table_service.dart';
+import 'package:presence_manager/services/date_service.dart';
 
 class EventOrganizationViewScreen extends StatelessWidget {
   final EventOrganization eventOrganization;
@@ -39,7 +40,7 @@ class EventOrganizationViewScreen extends StatelessWidget {
                 ),
                 _buildInfoRow(
                   'Date',
-                  '${eventOrganization.date.day}/${eventOrganization.date.month}/${eventOrganization.date.year}',
+                  DateService.formatFrLong(eventOrganization.date),
                 ),
                 _buildInfoRow('Localisation', eventOrganization.location),
                 _buildInfoRow(

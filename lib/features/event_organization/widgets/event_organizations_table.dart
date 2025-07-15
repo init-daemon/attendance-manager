@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:presence_manager/features/event_organization/models/event_organization.dart';
+import 'package:presence_manager/services/date_service.dart';
 import 'package:presence_manager/services/event_table_service.dart';
 
 class EventOrganizationsTable extends StatelessWidget {
@@ -47,9 +48,7 @@ class EventOrganizationsTable extends StatelessWidget {
                     },
                   ),
                 ),
-                DataCell(
-                  Text('${org.date.day}/${org.date.month}/${org.date.year}'),
-                ),
+                DataCell(Text(DateService.formatFr(org.date))),
                 DataCell(Text(org.location)),
                 DataCell(Text(org.description ?? '')),
                 DataCell(

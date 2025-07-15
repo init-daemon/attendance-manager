@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:presence_manager/features/event_organization/models/event_organization.dart';
+import 'package:presence_manager/services/date_service.dart';
 
 class EventOrganizationForm extends StatefulWidget {
   final EventOrganization? eventOrganization;
+  final String eventId;
   final Function(EventOrganization) onSave;
 
   const EventOrganizationForm({
     super.key,
     this.eventOrganization,
+    required this.eventId,
     required this.onSave,
   });
 
@@ -35,6 +38,9 @@ class _EventOrganizationFormState extends State<EventOrganizationForm> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.eventId.isEmpty) {
+      return const SizedBox.shrink();
+    }
     return Form(
       key: _formKey,
       child: Column(
@@ -57,20 +63,42 @@ class _EventOrganizationFormState extends State<EventOrganizationForm> {
           ListTile(
             title: Text(
               _date != null
-                  ? 'Date: ${_date!.toLocal().toString().split(' ')[0]}'
+                  ? DateService.formatFr(_date!)
                   : 'Sélectionner une date',
             ),
             trailing: const Icon(Icons.calendar_today),
             onTap: () async {
-              final picked = await showDatePicker(
+              final pickedDate = await showDatePicker(
                 context: context,
                 initialDate: _date ?? DateTime.now(),
                 firstDate: DateTime(2000),
                 lastDate: DateTime(2100),
               );
-              if (picked != null) {
+              if (pickedDate != null) {
+                final pickedTime = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.fromDateTime(_date ?? DateTime.now()),
+                );
                 setState(() {
-                  _date = picked;
+                  if (pickedTime != null) {
+                    _date = DateTime(
+                      pickedDate.year,
+                      pickedDate.month,
+                      pickedDate.day,
+                      pickedTime.hour,
+                      pickedTime.minute,
+                      0,
+                    );
+                  } else {
+                    _date = DateTime(
+                      pickedDate.year,
+                      pickedDate.month,
+                      pickedDate.day,
+                      0,
+                      0,
+                      0,
+                    );
+                  }
                 });
               }
             },
@@ -82,7 +110,7 @@ class _EventOrganizationFormState extends State<EventOrganizationForm> {
                   id:
                       widget.eventOrganization?.id ??
                       DateTime.now().millisecondsSinceEpoch.toString(),
-                  eventId: widget.eventOrganization?.eventId ?? '',
+                  eventId: widget.eventId,
                   description: _descriptionController.text,
                   date: _date!,
                   location: _locationController.text,
