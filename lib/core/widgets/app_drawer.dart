@@ -17,7 +17,7 @@ class AppDrawer extends StatelessWidget {
             leading: const Icon(Icons.people),
             title: const Text('Individus'),
             onTap: () {
-              Navigator.pushReplacementNamed(context, '/individuals');
+              Navigator.pushReplacementNamed(context, '/members');
             },
           ),
           ListTile(

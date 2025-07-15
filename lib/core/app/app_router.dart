@@ -1,10 +1,15 @@
 // lib/core/app/app_router.dart
 import 'package:flutter/material.dart';
-import 'package:presence_manager/features/individual/screens/individuals_list_screen.dart';
-import '../../features/individual/screens/individual_create_screen.dart';
-import '../../features/individual/screens/individual_view_screen.dart';
-import '../../features/individual/screens/individual_edit_screen.dart';
-import '../../features/individual/models/individual.dart';
+import 'package:presence_manager/features/member/screens/members_list_screen.dart';
+import 'package:presence_manager/features/event/screens/events_list_screen.dart';
+import '../../features/member/screens/member_create_screen.dart';
+import '../../features/member/screens/member_view_screen.dart';
+import '../../features/member/screens/member_edit_screen.dart';
+import '../../features/member/models/member.dart';
+import '../../features/event/screens/event_create_screen.dart';
+import '../../features/event/screens/event_view_screen.dart';
+import '../../features/event/screens/event_edit_screen.dart';
+import '../../features/event/models/event.dart';
 import '../widgets/error_page.dart';
 import '../widgets/app_layout.dart';
 
@@ -12,23 +17,31 @@ class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case '/':
-        return MaterialPageRoute(builder: (_) => const IndividualsListScreen());
-      case '/individuals':
-        return MaterialPageRoute(builder: (_) => const IndividualsListScreen());
-      case '/individuals/create':
+        return MaterialPageRoute(builder: (_) => const MembersListScreen());
+      case '/members':
+        return MaterialPageRoute(builder: (_) => const MembersListScreen());
+      case '/members/create':
+        return MaterialPageRoute(builder: (_) => const MemberCreateScreen());
+      case '/members/view':
+        final member = settings.arguments as Member;
         return MaterialPageRoute(
-          builder: (_) => const IndividualCreateScreen(),
+          builder: (_) => MemberViewScreen(member: member),
         );
-      case '/individuals/view':
-        final individual = settings.arguments as Individual;
+      case '/members/edit':
+        final member = settings.arguments as Member;
         return MaterialPageRoute(
-          builder: (_) => IndividualViewScreen(individual: individual),
+          builder: (_) => MemberEditScreen(member: member),
         );
-      case '/individuals/edit':
-        final individual = settings.arguments as Individual;
-        return MaterialPageRoute(
-          builder: (_) => IndividualEditScreen(individual: individual),
-        );
+      case '/events':
+        return MaterialPageRoute(builder: (_) => const EventsListScreen());
+      case '/events/create':
+        return MaterialPageRoute(builder: (_) => const EventCreateScreen());
+      case '/events/view':
+        final event = settings.arguments as Event;
+        return MaterialPageRoute(builder: (_) => EventViewScreen(event: event));
+      case '/events/edit':
+        final event = settings.arguments as Event;
+        return MaterialPageRoute(builder: (_) => EventEditScreen(event: event));
       case '/error':
         final message = settings.arguments as String?;
         return MaterialPageRoute(

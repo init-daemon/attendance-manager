@@ -1,11 +1,11 @@
-class Individual {
+class Member {
   final String id;
   String firstName;
   String lastName;
   DateTime birthDate;
   bool isHidden;
 
-  Individual({
+  Member({
     required this.id,
     required this.firstName,
     required this.lastName,
@@ -29,8 +29,8 @@ class Individual {
     };
   }
 
-  factory Individual.fromMap(Map<String, dynamic> map) {
-    return Individual(
+  factory Member.fromMap(Map<String, dynamic> map) {
+    return Member(
       id: map['id'],
       firstName: map['firstName'],
       lastName: map['lastName'],

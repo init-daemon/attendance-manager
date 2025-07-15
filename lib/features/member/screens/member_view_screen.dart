@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
-import '../models/individual.dart';
+import '../models/member.dart';
 import '../widgets/profile_avatar.dart';
-import '../../../core/widgets/app_layout.dart'; // Import du layout commun
-import '../../individual/screens/individual_edit_screen.dart';
+import '../../../core/widgets/app_layout.dart';
+import '../../member/screens/member_edit_screen.dart';
 
-class IndividualViewScreen extends StatelessWidget {
-  final Individual individual;
-  static const String routeName = '/individuals/view'; // Nom de route constant
+class MemberViewScreen extends StatelessWidget {
+  final Member member;
+  static const String routeName = '/members/view';
 
-  const IndividualViewScreen({super.key, required this.individual});
+  const MemberViewScreen({super.key, required this.member});
 
   String get initials =>
-      '${individual.firstName.isNotEmpty ? individual.firstName[0] : ''}'
-      '${individual.lastName.isNotEmpty ? individual.lastName[0] : ''}';
+      '${member.firstName.isNotEmpty ? member.firstName[0] : ''}'
+      '${member.lastName.isNotEmpty ? member.lastName[0] : ''}';
 
   @override
   Widget build(BuildContext context) {
     return AppLayout(
-      title: 'Détails de l\'individu',
+      title: 'Détails du membre',
       appBarActions: [
         IconButton(
           icon: const Icon(Icons.edit),
@@ -38,15 +38,15 @@ class IndividualViewScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildInfoRow('Nom', individual.lastName),
-                      _buildInfoRow('Prénom', individual.firstName),
+                      _buildInfoRow('Nom', member.lastName),
+                      _buildInfoRow('Prénom', member.firstName),
                       _buildInfoRow(
                         'Date de naissance',
-                        '${individual.birthDate.day}/${individual.birthDate.month}/${individual.birthDate.year}',
+                        '${member.birthDate.day}/${member.birthDate.month}/${member.birthDate.year}',
                       ),
                       _buildInfoRow(
                         'Statut',
-                        individual.isHidden ? 'Caché' : 'Visible',
+                        member.isHidden ? 'Caché' : 'Visible',
                       ),
                     ],
                   ),
@@ -77,17 +77,16 @@ class IndividualViewScreen extends StatelessWidget {
   void _navigateToEditScreen(BuildContext context) {
     Navigator.pushNamed(
       context,
-      IndividualEditScreen.routeName,
-      arguments: individual,
-    ).then((updatedIndividual) {
-      if (updatedIndividual != null && updatedIndividual is Individual) {
-        Navigator.pop(context, updatedIndividual);
+      MemberEditScreen.routeName,
+      arguments: member,
+    ).then((updatedMember) {
+      if (updatedMember != null && updatedMember is Member) {
+        Navigator.pop(context, updatedMember);
       }
     });
   }
 
-  // Méthode statique pour faciliter la navigation
-  static void navigate(BuildContext context, Individual individual) {
-    Navigator.pushNamed(context, routeName, arguments: individual);
+  static void navigate(BuildContext context, Member member) {
+    Navigator.pushNamed(context, routeName, arguments: member);
   }
 }
