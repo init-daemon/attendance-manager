@@ -68,4 +68,17 @@ class EventTableService {
 
     return maps.map((map) => Event.fromMap(map)).toList();
   }
+
+  static Future<Event?> getById(String id) async {
+    final db = await AppDbService.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'events',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (maps.isNotEmpty) {
+      return Event.fromMap(maps.first);
+    }
+    return null;
+  }
 }

@@ -1,3 +1,6 @@
+import 'package:presence_manager/features/event/models/event.dart';
+import 'package:presence_manager/services/event_table_service.dart';
+
 class EventOrganization {
   final String id;
   final String eventId;
@@ -31,5 +34,9 @@ class EventOrganization {
       date: DateTime.parse(map['date']),
       location: map['location'] ?? '',
     );
+  }
+
+  Future<Event?> fetchEvent() async {
+    return await EventTableService.getById(eventId);
   }
 }

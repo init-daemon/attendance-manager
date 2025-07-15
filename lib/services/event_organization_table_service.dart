@@ -14,7 +14,8 @@ class EventOrganizationTableService {
         event_id TEXT NOT NULL,
         description TEXT,
         date TEXT NOT NULL,
-        location TEXT NOT NULL
+        location TEXT NOT NULL,
+        FOREIGN KEY(event_id) REFERENCES events(id) ON DELETE CASCADE
       )
     ''');
   }

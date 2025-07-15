@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:presence_manager/features/event_organization/models/event_organization.dart';
+import 'package:presence_manager/services/event_table_service.dart';
 
 class EventOrganizationsTable extends StatelessWidget {
   final List<EventOrganization> organizations;
@@ -19,6 +20,7 @@ class EventOrganizationsTable extends StatelessWidget {
         scrollDirection: Axis.vertical,
         child: DataTable(
           columns: const [
+            DataColumn(label: Text('Événement')),
             DataColumn(label: Text('Date')),
             DataColumn(label: Text('Localisation')),
             DataColumn(label: Text('Description')),
@@ -27,6 +29,24 @@ class EventOrganizationsTable extends StatelessWidget {
           rows: organizations.map((org) {
             return DataRow(
               cells: [
+                DataCell(
+                  FutureBuilder(
+                    future: EventTableService.getById(org.eventId),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const SizedBox(
+                          width: 80,
+                          height: 16,
+                          child: LinearProgressIndicator(),
+                        );
+                      }
+                      if (snapshot.hasData && snapshot.data != null) {
+                        return Text(snapshot.data!.name);
+                      }
+                      return const Text('Non trouvé');
+                    },
+                  ),
+                ),
                 DataCell(
                   Text('${org.date.day}/${org.date.month}/${org.date.year}'),
                 ),
