@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:presence_manager/services/member_table_service.dart';
 import 'package:presence_manager/services/event_table_service.dart';
+import 'package:presence_manager/services/event_organization_table_service.dart';
 
 class AppDbService {
   static Database? _db;
@@ -26,6 +27,7 @@ class AppDbService {
       onCreate: (db, version) async {
         await MemberTableService.createTable(db);
         await EventTableService.createTable(db);
+        await EventOrganizationTableService.createTable(db);
       },
     );
   }
