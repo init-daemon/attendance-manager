@@ -10,6 +10,11 @@ import 'package:presence_manager/features/event/screens/event_create_screen.dart
 import 'package:presence_manager/features/event/screens/event_view_screen.dart';
 import 'package:presence_manager/features/event/screens/event_edit_screen.dart';
 import 'package:presence_manager/features/event/models/event.dart';
+import 'package:presence_manager/features/event_organization/screens/event_organizations_list_screen.dart';
+import 'package:presence_manager/features/event_organization/screens/event_organization_create_screen.dart';
+import 'package:presence_manager/features/event_organization/screens/event_organization_edit_screen.dart';
+import 'package:presence_manager/features/event_organization/screens/event_organization_view_screen.dart';
+import 'package:presence_manager/features/event_organization/models/event_organization.dart';
 import 'package:presence_manager/core/widgets/error_page.dart';
 import 'package:presence_manager/core/widgets/app_layout.dart';
 
@@ -42,6 +47,24 @@ class AppRouter {
       case '/events/edit':
         final event = settings.arguments as Event;
         return MaterialPageRoute(builder: (_) => EventEditScreen(event: event));
+      case '/event-organizations':
+        return MaterialPageRoute(
+          builder: (_) => const EventOrganizationsListScreen(),
+        );
+      case '/event-organizations/create':
+        return MaterialPageRoute(
+          builder: (_) => const EventOrganizationCreateScreen(),
+        );
+      case '/event-organizations/view':
+        final org = settings.arguments as EventOrganization;
+        return MaterialPageRoute(
+          builder: (_) => EventOrganizationViewScreen(eventOrganization: org),
+        );
+      case '/event-organizations/edit':
+        final org = settings.arguments as EventOrganization;
+        return MaterialPageRoute(
+          builder: (_) => EventOrganizationEditScreen(eventOrganization: org),
+        );
       case '/error':
         final message = settings.arguments as String?;
         return MaterialPageRoute(

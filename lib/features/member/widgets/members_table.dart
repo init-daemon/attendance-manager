@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:presence_manager/features/member/models/member.dart';
 import 'package:presence_manager/features/member/screens/member_view_screen.dart';
+import 'package:presence_manager/services/date_service.dart';
 
 class MembersTable extends StatelessWidget {
   final List<Member> members;
@@ -26,7 +27,9 @@ class MembersTable extends StatelessWidget {
               cells: [
                 DataCell(Text(member.lastName)),
                 DataCell(Text(member.firstName)),
-                DataCell(Text(member.birthDate.toString())),
+                DataCell(
+                  Text(DateService.formatFr(member.birthDate, withHour: false)),
+                ),
                 DataCell(
                   Row(
                     children: [
