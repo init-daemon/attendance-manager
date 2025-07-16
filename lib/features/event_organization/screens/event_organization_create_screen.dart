@@ -19,9 +19,9 @@ class _EventOrganizationCreateScreenState
   String? _selectedEventId;
   Event? _selectedEvent;
 
-  void _save(EventOrganization org) async {
+  Future<String> _save(EventOrganization org) async {
     await EventOrganizationTableService.insert(org);
-    Navigator.pop(context);
+    return org.id;
   }
 
   Future<void> _selectExistingEvent() async {

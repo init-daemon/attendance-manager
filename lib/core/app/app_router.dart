@@ -15,6 +15,7 @@ import 'package:presence_manager/features/event_organization/screens/event_organ
 import 'package:presence_manager/features/event_organization/screens/event_organization_edit_screen.dart';
 import 'package:presence_manager/features/event_organization/screens/event_organization_view_screen.dart';
 import 'package:presence_manager/features/event_organization/models/event_organization.dart';
+import 'package:presence_manager/features/event_organization/screens/event_organization_participants_screen.dart';
 import 'package:presence_manager/core/widgets/error_page.dart';
 import 'package:presence_manager/core/widgets/app_layout.dart';
 
@@ -64,6 +65,13 @@ class AppRouter {
         final org = settings.arguments as EventOrganization;
         return MaterialPageRoute(
           builder: (_) => EventOrganizationEditScreen(eventOrganization: org),
+        );
+      case '/event-organization/participants':
+        final eventOrganizationId = settings.arguments as String;
+        return MaterialPageRoute(
+          builder: (_) => EventOrganizationParticipantsScreen(
+            eventOrganizationId: eventOrganizationId,
+          ),
         );
       case '/error':
         final message = settings.arguments as String?;

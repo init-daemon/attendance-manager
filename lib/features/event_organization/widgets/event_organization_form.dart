@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:presence_manager/features/event_organization/models/event_organization.dart';
-import 'package:presence_manager/features/event_organization/widgets/event_participants_table.dart';
 import 'package:presence_manager/services/date_service.dart';
 
 class EventOrganizationForm extends StatefulWidget {
@@ -108,30 +107,60 @@ class _EventOrganizationFormState extends State<EventOrganizationForm> {
                   }
                 },
               ),
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate() && _date != null) {
-                    final org = EventOrganization(
-                      id:
-                          widget.eventOrganization?.id ??
-                          DateTime.now().millisecondsSinceEpoch.toString(),
-                      eventId: widget.eventId,
-                      description: _descriptionController.text,
-                      date: _date!,
-                      location: _locationController.text,
-                    );
-                    widget.onSave(org);
-                  }
-                },
-                child: const Text('Enregistrer'),
-              ),
+              if (widget.eventOrganization?.id == null)
+                ElevatedButton(
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate() && _date != null) {
+                      final org = EventOrganization(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        eventId: widget.eventId,
+                        description: _descriptionController.text,
+                        date: _date!,
+                        location: _locationController.text,
+                      );
+                      final savedId = await widget.onSave(org);
+                      final eventOrgId = savedId ?? org.id;
+                      Navigator.pushNamed(
+                        context,
+                        '/event-organization/participants',
+                        arguments: eventOrgId,
+                      );
+                    }
+                  },
+                  child: const Text('Enregistrer et gérer les participants'),
+                )
+              else
+                ElevatedButton(
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate() && _date != null) {
+                      final org = EventOrganization(
+                        id: widget.eventOrganization!.id,
+                        eventId: widget.eventOrganization!.eventId,
+                        description: _descriptionController.text,
+                        date: _date!,
+                        location: _locationController.text,
+                      );
+                      await widget.onSave(org);
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text('Enregistrer'),
+                ),
             ],
           ),
         ),
         const SizedBox(height: 16),
-        if (widget.eventOrganization != null || widget.eventId.isNotEmpty)
-          EventParticipantsTable(
-            eventOrganizationId: widget.eventOrganization?.id ?? widget.eventId,
+        if (widget.eventOrganization?.id != null)
+          ElevatedButton.icon(
+            icon: const Icon(Icons.group),
+            label: const Text('Gérer les participants'),
+            onPressed: () {
+              Navigator.pushNamed(
+                context,
+                '/event-organization/participants',
+                arguments: widget.eventOrganization!.id,
+              );
+            },
           ),
       ],
     );

@@ -31,9 +31,66 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
   }
 
   void _addParticipant() async {
-    // TODO:implémenter la recherche et sélection d'un individu
-    // await EventParticipantTableService.insert(EventParticipant(eventOrganizationId: widget.eventOrganizationId, individualId: selectedId));
-    // _refresh();
+    final db = await AppDbService.database;
+    final members = await db.query('members');
+    if (members.isEmpty) return;
+
+    String? selectedId;
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Ajouter un participant'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: members.length,
+              itemBuilder: (context, index) {
+                final member = members[index];
+                final prenom = member['firstName'] ?? '';
+                final nom = member['lastName'] ?? '';
+                final displayName = ('$prenom $nom').trim().isEmpty
+                    ? member['id'].toString()
+                    : '$prenom $nom';
+                return ListTile(
+                  title: Text(displayName),
+                  onTap: () {
+                    selectedId = member['id'] is String
+                        ? member['id'] as String
+                        : member['id'].toString();
+                    Navigator.pop(context);
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selectedId != null) {
+      final existing =
+          await EventParticipantTableService.getByEventOrganizationId(
+            widget.eventOrganizationId,
+          );
+      final alreadyAdded = existing.any((p) => p.individualId == selectedId);
+      if (!alreadyAdded) {
+        await EventParticipantTableService.insert(
+          EventParticipant(
+            eventOrganizationId: widget.eventOrganizationId,
+            individualId: selectedId!,
+            isPresent: false,
+          ),
+        );
+        _refresh();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ce membre est déjà participant.')),
+        );
+      }
+    }
   }
 
   void _removeParticipant(EventParticipant participant) async {
