@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:presence_manager/features/event_organization/models/event_organization.dart';
 import 'package:presence_manager/services/app_db_service.dart';
 import 'package:presence_manager/services/db_service.dart';
+import 'package:presence_manager/services/event_participant_table_service.dart';
 
 class EventOrganizationTableService {
   static const String table = 'event_organizations';
@@ -18,6 +19,7 @@ class EventOrganizationTableService {
         FOREIGN KEY(event_id) REFERENCES events(id) ON DELETE CASCADE
       )
     ''');
+    await EventParticipantTableService.createTable(db);
   }
 
   static Future<void> seed({int count = 10}) async {
@@ -44,6 +46,8 @@ class EventOrganizationTableService {
       );
 
       await db.insert(table, event.toMap());
+
+      await EventParticipantTableService.seedForEventOrganization(event.id);
     }
   }
 

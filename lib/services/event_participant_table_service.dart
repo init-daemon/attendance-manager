@@ -1,0 +1,86 @@
+import 'dart:math';
+import 'package:sqflite/sqflite.dart';
+import 'package:presence_manager/services/app_db_service.dart';
+import 'package:presence_manager/features/event_organization/models/event_participant.dart';
+
+class EventParticipantTableService {
+  static const String table = 'event_participants';
+
+  static Future<void> createTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE $table (
+        event_organization_id TEXT NOT NULL,
+        individual_id TEXT NOT NULL,
+        is_present INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (event_organization_id, individual_id),
+        FOREIGN KEY(event_organization_id) REFERENCES event_organizations(id) ON DELETE CASCADE,
+        FOREIGN KEY(individual_id) REFERENCES members(id) ON DELETE CASCADE
+      )
+    ''');
+  }
+
+  static Future<int> insert(EventParticipant participant) async {
+    final db = await AppDbService.database;
+    return await db.insert(
+      table,
+      participant.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  static Future<List<EventParticipant>> getByEventOrganizationId(
+    String eventOrganizationId,
+  ) async {
+    final db = await AppDbService.database;
+    final maps = await db.query(
+      table,
+      where: 'event_organization_id = ?',
+      whereArgs: [eventOrganizationId],
+    );
+    return maps.map((m) => EventParticipant.fromMap(m)).toList();
+  }
+
+  static Future<int> update(EventParticipant participant) async {
+    final db = await AppDbService.database;
+    return await db.update(
+      table,
+      participant.toMap(),
+      where: 'event_organization_id = ? AND individual_id = ?',
+      whereArgs: [participant.eventOrganizationId, participant.individualId],
+    );
+  }
+
+  static Future<int> delete(
+    String eventOrganizationId,
+    String individualId,
+  ) async {
+    final db = await AppDbService.database;
+    return await db.delete(
+      table,
+      where: 'event_organization_id = ? AND individual_id = ?',
+      whereArgs: [eventOrganizationId, individualId],
+    );
+  }
+
+  static Future<void> seedForEventOrganization(
+    String eventOrganizationId,
+  ) async {
+    final db = await AppDbService.database;
+    final members = await db.query('members');
+    if (members.isEmpty) return;
+
+    final random = Random();
+    final count = 2 + random.nextInt(4);
+    final shuffled = List<Map<String, dynamic>>.from(members)..shuffle(random);
+    final selected = shuffled.take(count);
+
+    for (final member in selected) {
+      final participant = EventParticipant(
+        eventOrganizationId: eventOrganizationId,
+        individualId: member['id'],
+        isPresent: random.nextBool(),
+      );
+      await insert(participant);
+    }
+  }
+}
