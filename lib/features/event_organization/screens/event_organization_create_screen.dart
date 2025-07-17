@@ -9,7 +9,8 @@ import 'package:presence_manager/core/widgets/app_layout.dart';
 import 'package:presence_manager/services/db_service.dart';
 
 class EventOrganizationCreateScreen extends StatefulWidget {
-  const EventOrganizationCreateScreen({super.key});
+  final Event? event;
+  const EventOrganizationCreateScreen({super.key, this.event});
 
   @override
   State<EventOrganizationCreateScreen> createState() =>
@@ -172,6 +173,15 @@ class _EventOrganizationCreateScreenState
   }
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.event != null) {
+      _selectedEventId = widget.event!.id;
+      _selectedEvent = widget.event;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return AppLayout(
       title: 'Organiser un évènement',
@@ -195,15 +205,17 @@ class _EventOrganizationCreateScreenState
               ListTile(
                 title: Text(_selectedEvent?.name ?? 'Événement sélectionné'),
                 subtitle: Text('ID: $_selectedEventId'),
-                trailing: IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () {
-                    setState(() {
-                      _selectedEventId = null;
-                      _selectedEvent = null;
-                    });
-                  },
-                ),
+                trailing: widget.event == null
+                    ? IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () {
+                          setState(() {
+                            _selectedEventId = null;
+                            _selectedEvent = null;
+                          });
+                        },
+                      )
+                    : null,
               ),
               const Divider(),
               EventOrganizationForm(eventId: _selectedEventId!, onSave: _save),
