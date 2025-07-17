@@ -3,6 +3,7 @@ import 'package:presence_manager/features/event_organization/widgets/event_organ
 import 'package:presence_manager/services/event_organization_table_service.dart';
 import 'package:presence_manager/features/event_organization/models/event_organization.dart';
 import 'package:presence_manager/services/event_table_service.dart';
+import 'package:presence_manager/core/widgets/app_layout.dart';
 
 class EventOrganizationEditScreen extends StatelessWidget {
   final EventOrganization eventOrganization;
@@ -19,8 +20,8 @@ class EventOrganizationEditScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Modifier l\'événement organisé')),
+    return AppLayout(
+      title: 'Modifier l\'événement organisé',
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

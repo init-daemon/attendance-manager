@@ -37,20 +37,37 @@ class _EventFormState extends State<EventForm> {
               return null;
             },
           ),
-          ElevatedButton(
-            onPressed: () {
-              if (_formKey.currentState!.validate()) {
-                final event = Event(
-                  id:
-                      widget.event?.id ??
-                      DateTime.now().millisecondsSinceEpoch.toString(),
-                  name: _nameController.text,
-                  createdAt: widget.event?.createdAt ?? DateTime.now(),
-                );
-                widget.onSave(event);
-              }
-            },
-            child: const Text('Enregistrer'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              ElevatedButton.icon(
+                icon: const Icon(Icons.cancel),
+                label: const Text('Annuler'),
+                onPressed: () {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/events',
+                    (route) => false,
+                  );
+                },
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    final event = Event(
+                      id:
+                          widget.event?.id ??
+                          DateTime.now().millisecondsSinceEpoch.toString(),
+                      name: _nameController.text,
+                      createdAt: widget.event?.createdAt ?? DateTime.now(),
+                    );
+                    widget.onSave(event);
+                  }
+                },
+                child: const Text('Enregistrer'),
+              ),
+            ],
           ),
         ],
       ),

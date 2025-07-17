@@ -20,22 +20,60 @@ class EventOrganizationsTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (organizations.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(24.0),
+        child: Center(child: Text('Aucun évènement organisé associé')),
+      );
+    }
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: DataTable(
           columns: const [
+            DataColumn(label: Text('Actions')),
             DataColumn(label: Text('Événement')),
             DataColumn(label: Text('Date')),
             DataColumn(label: Text('Localisation')),
             DataColumn(label: Text('Description')),
-            DataColumn(label: Text('Participants')), // Nouvelle colonne
-            DataColumn(label: Text('Actions')),
+            DataColumn(label: Text('Participants')),
           ],
           rows: organizations.map((org) {
             return DataRow(
               cells: [
+                DataCell(
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.visibility),
+                        onPressed: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/event-organizations/view',
+                            arguments: org,
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () {
+                          if (onEditOrganization != null) {
+                            onEditOrganization!(org);
+                          }
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.group),
+                        onPressed: () {
+                          if (onManageParticipants != null) {
+                            onManageParticipants!(org);
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
                 DataCell(
                   FutureBuilder(
                     future: EventTableService.getById(org.eventId),
@@ -77,38 +115,6 @@ class EventOrganizationsTable extends StatelessWidget {
                       }
                       return const Text('0');
                     },
-                  ),
-                ),
-                DataCell(
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.visibility),
-                        onPressed: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/event-organizations/view',
-                            arguments: org,
-                          );
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () {
-                          if (onEditOrganization != null) {
-                            onEditOrganization!(org);
-                          }
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.group),
-                        onPressed: () {
-                          if (onManageParticipants != null) {
-                            onManageParticipants!(org);
-                          }
-                        },
-                      ),
-                    ],
                   ),
                 ),
               ],

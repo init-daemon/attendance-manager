@@ -56,12 +56,6 @@ class EventOrganizationTableService {
     return await db.insert(table, org.toMap());
   }
 
-  static Future<List<EventOrganization>> getAll() async {
-    final db = await AppDbService.database;
-    final maps = await db.query(table);
-    return maps.map((m) => EventOrganization.fromMap(m)).toList();
-  }
-
   static Future<int> update(EventOrganization org) async {
     final db = await AppDbService.database;
     return await db.update(

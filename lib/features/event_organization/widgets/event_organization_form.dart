@@ -41,72 +41,83 @@ class _EventOrganizationFormState extends State<EventOrganizationForm> {
     if (widget.eventId.isEmpty) {
       return const SizedBox.shrink();
     }
-    return Column(
-      children: [
-        Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Description'),
-                maxLines: 2,
-              ),
-              TextFormField(
-                controller: _locationController,
-                decoration: const InputDecoration(labelText: 'Localisation'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer une localisation';
-                  }
-                  return null;
-                },
-              ),
-              ListTile(
-                title: Text(
-                  _date != null
-                      ? DateService.formatFr(_date!)
-                      : 'Sélectionner une date',
-                ),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () async {
-                  final pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: _date ?? DateTime.now(),
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                  );
-                  if (pickedDate != null) {
-                    final pickedTime = await showTimePicker(
-                      context: context,
-                      initialTime: TimeOfDay.fromDateTime(
-                        _date ?? DateTime.now(),
-                      ),
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: [
+          TextFormField(
+            controller: _descriptionController,
+            decoration: const InputDecoration(labelText: 'Description'),
+            maxLines: 2,
+          ),
+          TextFormField(
+            controller: _locationController,
+            decoration: const InputDecoration(labelText: 'Localisation'),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Veuillez entrer une localisation';
+              }
+              return null;
+            },
+          ),
+          ListTile(
+            title: Text(
+              _date != null
+                  ? DateService.formatFr(_date!)
+                  : 'Sélectionner une date',
+            ),
+            trailing: const Icon(Icons.calendar_today),
+            onTap: () async {
+              final pickedDate = await showDatePicker(
+                context: context,
+                initialDate: _date ?? DateTime.now(),
+                firstDate: DateTime(2000),
+                lastDate: DateTime(2100),
+              );
+              if (pickedDate != null) {
+                final pickedTime = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.fromDateTime(_date ?? DateTime.now()),
+                );
+                setState(() {
+                  if (pickedTime != null) {
+                    _date = DateTime(
+                      pickedDate.year,
+                      pickedDate.month,
+                      pickedDate.day,
+                      pickedTime.hour,
+                      pickedTime.minute,
+                      0,
                     );
-                    setState(() {
-                      if (pickedTime != null) {
-                        _date = DateTime(
-                          pickedDate.year,
-                          pickedDate.month,
-                          pickedDate.day,
-                          pickedTime.hour,
-                          pickedTime.minute,
-                          0,
-                        );
-                      } else {
-                        _date = DateTime(
-                          pickedDate.year,
-                          pickedDate.month,
-                          pickedDate.day,
-                          0,
-                          0,
-                          0,
-                        );
-                      }
-                    });
+                  } else {
+                    _date = DateTime(
+                      pickedDate.year,
+                      pickedDate.month,
+                      pickedDate.day,
+                      0,
+                      0,
+                      0,
+                    );
                   }
+                });
+              }
+            },
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              ElevatedButton.icon(
+                icon: const Icon(Icons.cancel),
+                label: const Text('Annuler'),
+                onPressed: () {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/event-organizations',
+                    (route) => false,
+                  );
                 },
               ),
+              const SizedBox(width: 12),
               if (widget.eventOrganization?.id == null)
                 ElevatedButton(
                   onPressed: () async {
@@ -154,24 +165,24 @@ class _EventOrganizationFormState extends State<EventOrganizationForm> {
                 ),
             ],
           ),
-        ),
-        const SizedBox(height: 16),
-        if (widget.eventOrganization?.id != null)
-          ElevatedButton.icon(
-            icon: const Icon(Icons.group),
-            label: const Text('Gérer les participants'),
-            onPressed: () {
-              Navigator.pushNamed(
-                context,
-                '/event-organization/participants',
-                arguments: {
-                  'eventOrganizationId': widget.eventOrganization!.id,
-                  'eventOrganization': widget.eventOrganization,
-                },
-              );
-            },
-          ),
-      ],
+          const SizedBox(height: 16),
+          if (widget.eventOrganization?.id != null)
+            ElevatedButton.icon(
+              icon: const Icon(Icons.group),
+              label: const Text('Gérer les participants'),
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  '/event-organization/participants',
+                  arguments: {
+                    'eventOrganizationId': widget.eventOrganization!.id,
+                    'eventOrganization': widget.eventOrganization,
+                  },
+                );
+              },
+            ),
+        ],
+      ),
     );
   }
 }

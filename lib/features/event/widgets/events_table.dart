@@ -16,19 +16,13 @@ class EventsTable extends StatelessWidget {
         scrollDirection: Axis.vertical,
         child: DataTable(
           columns: const [
+            DataColumn(label: Text('Actions')), // déplacé à gauche
             DataColumn(label: Text('Nom')),
             DataColumn(label: Text('Date de création')),
-            DataColumn(label: Text('Actions')),
           ],
           rows: events.map((event) {
             return DataRow(
               cells: [
-                DataCell(Text(event.name)),
-                DataCell(
-                  Text(
-                    '${event.createdAt.day}/${event.createdAt.month}/${event.createdAt.year}',
-                  ),
-                ),
                 DataCell(
                   Row(
                     children: [
@@ -58,6 +52,12 @@ class EventsTable extends StatelessWidget {
                         },
                       ),
                     ],
+                  ),
+                ),
+                DataCell(Text(event.name)),
+                DataCell(
+                  Text(
+                    '${event.createdAt.day}/${event.createdAt.month}/${event.createdAt.year}',
                   ),
                 ),
               ],

@@ -17,7 +17,7 @@ void main() async {
 
   print('Database path: ' + await getDatabasesPath());
 
-  await DbService.initialize(fresh: true);
+  // await DbService.initialize(fresh: true);
 
   FlutterError.onError = (FlutterErrorDetails details) async {
     FlutterError.presentError(details);

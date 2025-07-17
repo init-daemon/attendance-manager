@@ -64,11 +64,4 @@ class MemberTableService {
 
     await db.delete('members', where: 'id = ?', whereArgs: [id]);
   }
-
-  static Future<List<Member>> getAll() async {
-    final db = await AppDbService.database;
-    final List<Map<String, dynamic>> maps = await db.query('members');
-
-    return maps.map((map) => Member.fromMap(map)).toList();
-  }
 }

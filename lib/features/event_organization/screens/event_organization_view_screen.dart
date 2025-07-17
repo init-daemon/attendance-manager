@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:presence_manager/features/event_organization/models/event_organization.dart';
 import 'package:presence_manager/services/event_table_service.dart';
 import 'package:presence_manager/services/date_service.dart';
+import 'package:presence_manager/core/widgets/app_layout.dart';
 
 class EventOrganizationViewScreen extends StatelessWidget {
   final EventOrganization eventOrganization;
@@ -13,14 +14,15 @@ class EventOrganizationViewScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Détails organisation')),
+    return AppLayout(
+      title: 'Détails organisation',
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Card(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 FutureBuilder(

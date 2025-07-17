@@ -53,8 +53,9 @@ class AppRouter {
           builder: (_) => const EventOrganizationsListScreen(),
         );
       case '/event-organizations/create':
+        final event = settings.arguments as Event?;
         return MaterialPageRoute(
-          builder: (_) => const EventOrganizationCreateScreen(),
+          builder: (_) => EventOrganizationCreateScreen(event: event),
         );
       case '/event-organizations/view':
         final org = settings.arguments as EventOrganization;

@@ -2,12 +2,124 @@ import 'package:flutter/material.dart';
 import 'package:presence_manager/features/event/models/event.dart';
 import 'package:presence_manager/core/widgets/app_layout.dart';
 import 'package:presence_manager/features/event/screens/event_edit_screen.dart';
+import 'package:presence_manager/features/event_organization/models/event_organization.dart';
+import 'package:presence_manager/features/event_organization/widgets/event_organizations_table.dart';
+import 'package:presence_manager/services/db_service.dart';
+import 'package:presence_manager/shared/constants/pagination_constants.dart';
+import 'dart:async';
 
-class EventViewScreen extends StatelessWidget {
+class EventViewScreen extends StatefulWidget {
   final Event event;
   static const String routeName = '/events/view';
 
   const EventViewScreen({super.key, required this.event});
+
+  @override
+  State<EventViewScreen> createState() => _EventViewScreenState();
+}
+
+class _EventViewScreenState extends State<EventViewScreen> {
+  int _currentPage = 0;
+  int _pageSize = PaginationConstants.defaultPageSize;
+  int _totalOrgs = 0;
+  late Future<List<EventOrganization>> _orgsFuture;
+  String _searchText = '';
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOrgs();
+  }
+
+  void _loadOrgs() {
+    if (_searchText.isEmpty) {
+      setState(() {
+        _orgsFuture =
+            DbService.getPaged(
+              tableName: 'event_organizations',
+              limit: _pageSize,
+              offset: _currentPage * _pageSize,
+              orderBy: 'date DESC',
+            ).then(
+              (maps) => maps
+                  .map((map) => EventOrganization.fromMap(map))
+                  .where((org) => org.eventId == widget.event.id)
+                  .toList(),
+            );
+        DbService.count('event_organizations').then((count) {
+          setState(() {
+            _totalOrgs = count;
+          });
+        });
+      });
+    } else {
+      setState(() {
+        _orgsFuture =
+            DbService.search(
+              tableName: 'event_organizations',
+              query: _searchText,
+              fields: ['location', 'description'],
+              limit: _pageSize,
+              offset: _currentPage * _pageSize,
+              orderBy: 'date DESC',
+            ).then(
+              (maps) => maps
+                  .map((map) => EventOrganization.fromMap(map))
+                  .where((org) => org.eventId == widget.event.id)
+                  .toList(),
+            );
+        DbService.search(
+          tableName: 'event_organizations',
+          query: _searchText,
+          fields: ['location', 'description'],
+          limit: 1000000,
+          offset: 0,
+        ).then((maps) {
+          setState(() {
+            _totalOrgs = maps
+                .map((map) => EventOrganization.fromMap(map))
+                .where((org) => org.eventId == widget.event.id)
+                .length;
+          });
+        });
+      });
+    }
+  }
+
+  void _onPageSizeChanged(int? value) {
+    if (value != null) {
+      setState(() {
+        _pageSize = value;
+        _currentPage = 0;
+      });
+      _loadOrgs();
+    }
+  }
+
+  void _onPageChanged(int page) {
+    setState(() {
+      _currentPage = page;
+    });
+    _loadOrgs();
+  }
+
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _searchText = value;
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      _currentPage = 0;
+      _loadOrgs();
+    });
+  }
+
+  int get totalPages => (_totalOrgs / _pageSize).ceil();
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +132,7 @@ class EventViewScreen extends StatelessWidget {
             Navigator.pushNamed(
               context,
               EventEditScreen.routeName,
-              arguments: event,
+              arguments: widget.event,
             ).then((updatedEvent) {
               if (updatedEvent != null && updatedEvent is Event) {
                 Navigator.pop(context, updatedEvent);
@@ -31,21 +143,156 @@ class EventViewScreen extends StatelessWidget {
       ],
       body: SingleChildScrollView(
         child: Center(
-          child: Card(
-            margin: const EdgeInsets.all(16),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildInfoRow('Nom', event.name),
-                  _buildInfoRow(
-                    'Date de création',
-                    '${event.createdAt.day}/${event.createdAt.month}/${event.createdAt.year}',
+          child: Column(
+            children: [
+              Card(
+                margin: const EdgeInsets.all(16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildInfoRow('Nom', widget.event.name),
+                      _buildInfoRow(
+                        'Date de création',
+                        '${widget.event.createdAt.day}/${widget.event.createdAt.month}/${widget.event.createdAt.year}',
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.event),
+                            label: const Text('Organiser un évènement'),
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                '/event-organizations/create',
+                                arguments: widget.event,
+                              );
+                            },
+                          ),
+                          Row(
+                            children: [
+                              ElevatedButton.icon(
+                                icon: const Icon(Icons.edit),
+                                label: const Text('Modifier'),
+                                onPressed: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    EventEditScreen.routeName,
+                                    arguments: widget.event,
+                                  ).then((updatedEvent) {
+                                    if (updatedEvent != null &&
+                                        updatedEvent is Event) {
+                                      Navigator.pop(context, updatedEvent);
+                                    }
+                                  });
+                                },
+                              ),
+                              const SizedBox(width: 12),
+                              ElevatedButton.icon(
+                                icon: const Icon(Icons.list),
+                                label: const Text('Liste'),
+                                onPressed: () {
+                                  Navigator.pushNamedAndRemoveUntil(
+                                    context,
+                                    '/events',
+                                    (route) => false,
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: Column(
+                  children: [
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Recherche (localisation ou description)',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                      onChanged: _onSearchChanged,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Text('Événements organisés associés :'),
+                        const Spacer(),
+                        DropdownButton<int>(
+                          value: _pageSize,
+                          items: PaginationConstants.pageSizes
+                              .map(
+                                (size) => DropdownMenuItem(
+                                  value: size,
+                                  child: Text('$size'),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: _onPageSizeChanged,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.chevron_left),
+                          onPressed: _currentPage > 0
+                              ? () => _onPageChanged(_currentPage - 1)
+                              : null,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.chevron_right),
+                          onPressed: _currentPage < totalPages - 1
+                              ? () => _onPageChanged(_currentPage + 1)
+                              : null,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              FutureBuilder<List<EventOrganization>>(
+                future: _orgsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Erreur: ${snapshot.error}'));
+                  } else {
+                    final orgs = snapshot.data ?? [];
+                    return EventOrganizationsTable(
+                      organizations: orgs,
+                      onEdit: _loadOrgs,
+                      onManageParticipants: (org) {
+                        Navigator.pushNamed(
+                          context,
+                          '/event-organization/participants',
+                          arguments: {
+                            'eventOrganizationId': org.id,
+                            'eventOrganization': org,
+                          },
+                        );
+                      },
+                      onEditOrganization: (org) {
+                        Navigator.pushNamed(
+                          context,
+                          '/event-organizations/edit',
+                          arguments: org,
+                        );
+                      },
+                    );
+                  }
+                },
+              ),
+            ],
           ),
         ),
       ),
