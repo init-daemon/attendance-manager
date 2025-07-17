@@ -5,6 +5,7 @@ import 'package:presence_manager/features/event_organization/models/event_organi
 import 'package:presence_manager/features/event/models/event.dart';
 import 'package:presence_manager/services/event_table_service.dart';
 import 'package:presence_manager/features/event/widgets/event_form.dart';
+import 'package:presence_manager/core/widgets/app_layout.dart';
 
 class EventOrganizationCreateScreen extends StatefulWidget {
   const EventOrganizationCreateScreen({super.key});
@@ -79,8 +80,8 @@ class _EventOrganizationCreateScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Organiser un évènement')),
+    return AppLayout(
+      title: 'Organiser un évènement',
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

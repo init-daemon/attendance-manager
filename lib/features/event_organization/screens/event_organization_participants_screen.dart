@@ -3,6 +3,7 @@ import 'package:presence_manager/features/event_organization/widgets/event_parti
 import 'package:presence_manager/features/event_organization/models/event_organization.dart';
 import 'package:presence_manager/services/event_table_service.dart';
 import 'package:presence_manager/services/date_service.dart';
+import 'package:presence_manager/core/widgets/app_layout.dart';
 
 class EventOrganizationParticipantsScreen extends StatelessWidget {
   final String eventOrganizationId;
@@ -17,21 +18,13 @@ class EventOrganizationParticipantsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (eventOrganizationId.isEmpty || eventOrganization == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Participants')),
+      return AppLayout(
+        title: 'Participants',
         body: const Center(child: Text('Aucun événement sélectionné')),
       );
     }
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Participants'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-      ),
+    return AppLayout(
+      title: 'Participants',
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
