@@ -29,7 +29,7 @@ class EventOrganizationParticipantsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Card(
                 child: Padding(
@@ -106,6 +106,7 @@ class EventOrganizationParticipantsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               SizedBox(
+                width: double.infinity,
                 height: MediaQuery.of(context).size.height * 0.6,
                 child: EventParticipantsTable(
                   eventOrganizationId: eventOrganizationId,

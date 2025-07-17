@@ -227,41 +227,45 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text(
-                'Participants',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              SizedBox(width: 16),
-              IconButton(
-                icon: const Icon(Icons.person_add),
-                onPressed: _addParticipant,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: FutureBuilder<List<EventParticipant>>(
-              future: _participantsFuture,
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(child: LinearProgressIndicator());
-                }
-                final participants = snapshot.data!;
-                if (participants.isEmpty) {
-                  return const Center(child: Text('Aucun participant'));
-                }
-                return SingleChildScrollView(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Participants',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(width: 12),
+            IconButton(
+              icon: const Icon(Icons.person_add, size: 20),
+              onPressed: _addParticipant,
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Expanded(
+          child: FutureBuilder<List<EventParticipant>>(
+            future: _participantsFuture,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(child: LinearProgressIndicator());
+              }
+              final participants = snapshot.data!;
+              if (participants.isEmpty) {
+                return const Center(child: Text('Aucun participant'));
+              }
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: SingleChildScrollView(
                     scrollDirection: Axis.vertical,
                     child: DataTable(
+                      columnSpacing: 20,
+                      dataRowHeight: 48,
+                      headingRowHeight: 40,
                       columns: const [
                         DataColumn(label: Text('Nom')),
                         DataColumn(label: Text('Présent')),
@@ -294,7 +298,7 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
                             ),
                             DataCell(
                               IconButton(
-                                icon: const Icon(Icons.delete),
+                                icon: const Icon(Icons.delete, size: 20),
                                 onPressed: () => _removeParticipant(p),
                               ),
                             ),
@@ -303,12 +307,12 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
                       }).toList(),
                     ),
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
