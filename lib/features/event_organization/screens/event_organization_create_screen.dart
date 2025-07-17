@@ -108,6 +108,7 @@ class _EventOrganizationCreateScreenState
                                 _selectedEvent = event;
                               });
                               Navigator.pop(context);
+                              setState(() {});
                             },
                           );
                         },
@@ -146,6 +147,7 @@ class _EventOrganizationCreateScreenState
         );
       },
     );
+    setState(() {});
   }
 
   Future<void> _createNewEvent() async {
