@@ -13,12 +13,15 @@ class EventEditScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Modifier un événement')),
-      body: EventForm(
-        event: event,
-        onSave: (updated) async {
-          await EventTableService.update(updated);
-          Navigator.pop(context, updated);
-        },
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: EventForm(
+          event: event,
+          onSave: (updated) async {
+            await EventTableService.update(updated);
+            Navigator.pop(context, updated);
+          },
+        ),
       ),
     );
   }

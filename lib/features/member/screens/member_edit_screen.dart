@@ -24,12 +24,15 @@ class MemberEditScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: MemberForm(
-        member: member,
-        onSave: (updated) async {
-          await MemberTableService.update(updated);
-          Navigator.pop(context, updated);
-        },
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: MemberForm(
+          member: member,
+          onSave: (updated) async {
+            await MemberTableService.update(updated);
+            Navigator.pop(context, updated);
+          },
+        ),
       ),
     );
   }
