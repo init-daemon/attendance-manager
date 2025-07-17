@@ -33,7 +33,7 @@ class MembersTable extends StatelessWidget {
             DataColumn(label: Text('Actions')),
             DataColumn(label: Text('Nom')),
             DataColumn(label: Text('Prénom')),
-            DataColumn(label: Text('Caché')), // Nouvelle colonne
+            DataColumn(label: Text('Caché')),
             DataColumn(label: Text('Date de naissance')),
           ],
           rows: members.map((member) {

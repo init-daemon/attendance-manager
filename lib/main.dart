@@ -50,7 +50,7 @@ class PresenceManagerApp extends StatelessWidget {
       ),
       navigatorKey: navigatorKey,
       onGenerateRoute: AppRouter.generateRoute,
-      initialRoute: '/members',
+      initialRoute: '/',
     );
   }
 }

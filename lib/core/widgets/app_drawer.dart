@@ -14,6 +14,13 @@ class AppDrawer extends StatelessWidget {
             child: Text('Menu Principal'),
           ),
           ListTile(
+            leading: const Icon(Icons.dashboard),
+            title: const Text('Dashboard'),
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/');
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.people),
             title: const Text('Membres'),
             onTap: () {
