@@ -67,10 +67,14 @@ class AppRouter {
           builder: (_) => EventOrganizationEditScreen(eventOrganization: org),
         );
       case '/event-organization/participants':
-        final eventOrganizationId = settings.arguments as String;
+        final args = settings.arguments as Map;
+        final eventOrganizationId = args['eventOrganizationId'] as String;
+        final eventOrganization =
+            args['eventOrganization'] as EventOrganization?;
         return MaterialPageRoute(
           builder: (_) => EventOrganizationParticipantsScreen(
             eventOrganizationId: eventOrganizationId,
+            eventOrganization: eventOrganization,
           ),
         );
       case '/error':

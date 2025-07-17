@@ -123,7 +123,10 @@ class _EventOrganizationFormState extends State<EventOrganizationForm> {
                       Navigator.pushNamed(
                         context,
                         '/event-organization/participants',
-                        arguments: eventOrgId,
+                        arguments: {
+                          'eventOrganizationId': eventOrgId,
+                          'eventOrganization': org,
+                        },
                       );
                     }
                   },
@@ -141,7 +144,10 @@ class _EventOrganizationFormState extends State<EventOrganizationForm> {
                         location: _locationController.text,
                       );
                       await widget.onSave(org);
-                      Navigator.pop(context);
+                      Navigator.pushReplacementNamed(
+                        context,
+                        '/event-organizations',
+                      );
                     }
                   },
                   child: const Text('Enregistrer'),
@@ -158,7 +164,10 @@ class _EventOrganizationFormState extends State<EventOrganizationForm> {
               Navigator.pushNamed(
                 context,
                 '/event-organization/participants',
-                arguments: widget.eventOrganization!.id,
+                arguments: {
+                  'eventOrganizationId': widget.eventOrganization!.id,
+                  'eventOrganization': widget.eventOrganization,
+                },
               );
             },
           ),

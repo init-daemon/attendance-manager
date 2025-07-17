@@ -142,57 +142,64 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
             ),
           ],
         ),
-        FutureBuilder<List<EventParticipant>>(
-          future: _participantsFuture,
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return const LinearProgressIndicator();
-            }
-            final participants = snapshot.data!;
-            if (participants.isEmpty) {
-              return const Text('Aucun participant');
-            }
-            return DataTable(
-              columns: const [
-                DataColumn(label: Text('Nom')),
-                DataColumn(label: Text('Présent')),
-                DataColumn(label: Text('Actions')),
-              ],
-              rows: participants.map((p) {
-                return DataRow(
-                  cells: [
-                    DataCell(
-                      FutureBuilder<String>(
-                        future: _getMemberFullName(p.individualId),
-                        builder: (context, snap) {
-                          if (snap.connectionState == ConnectionState.waiting) {
-                            return const SizedBox(
-                              width: 60,
-                              height: 12,
-                              child: LinearProgressIndicator(),
-                            );
-                          }
-                          return Text(snap.data ?? p.individualId);
-                        },
-                      ),
-                    ),
-                    DataCell(
-                      Checkbox(
-                        value: p.isPresent,
-                        onChanged: (_) => _togglePresence(p),
-                      ),
-                    ),
-                    DataCell(
-                      IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: () => _removeParticipant(p),
-                      ),
-                    ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: FutureBuilder<List<EventParticipant>>(
+            future: _participantsFuture,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(child: LinearProgressIndicator());
+              }
+              final participants = snapshot.data!;
+              if (participants.isEmpty) {
+                return const Center(child: Text('Aucun participant'));
+              }
+              return SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: DataTable(
+                  columns: const [
+                    DataColumn(label: Text('Nom')),
+                    DataColumn(label: Text('Présent')),
+                    DataColumn(label: Text('Actions')),
                   ],
-                );
-              }).toList(),
-            );
-          },
+                  rows: participants.map((p) {
+                    return DataRow(
+                      cells: [
+                        DataCell(
+                          FutureBuilder<String>(
+                            future: _getMemberFullName(p.individualId),
+                            builder: (context, snap) {
+                              if (snap.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const SizedBox(
+                                  width: 60,
+                                  height: 12,
+                                  child: LinearProgressIndicator(),
+                                );
+                              }
+                              return Text(snap.data ?? p.individualId);
+                            },
+                          ),
+                        ),
+                        DataCell(
+                          Checkbox(
+                            value: p.isPresent,
+                            onChanged: (_) => _togglePresence(p),
+                          ),
+                        ),
+                        DataCell(
+                          IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () => _removeParticipant(p),
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              );
+            },
+          ),
         ),
       ],
     );
