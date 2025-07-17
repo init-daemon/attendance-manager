@@ -17,19 +17,14 @@ class MembersTable extends StatelessWidget {
         scrollDirection: Axis.vertical,
         child: DataTable(
           columns: const [
+            DataColumn(label: Text('Actions')),
             DataColumn(label: Text('Nom')),
             DataColumn(label: Text('Prénom')),
             DataColumn(label: Text('Date de naissance')),
-            DataColumn(label: Text('Actions')),
           ],
           rows: members.map((member) {
             return DataRow(
               cells: [
-                DataCell(Text(member.lastName)),
-                DataCell(Text(member.firstName)),
-                DataCell(
-                  Text(DateService.formatFr(member.birthDate, withHour: false)),
-                ),
                 DataCell(
                   Row(
                     children: [
@@ -66,6 +61,11 @@ class MembersTable extends StatelessWidget {
                       ),
                     ],
                   ),
+                ),
+                DataCell(Text(member.lastName)),
+                DataCell(Text(member.firstName)),
+                DataCell(
+                  Text(DateService.formatFr(member.birthDate, withHour: false)),
                 ),
               ],
             );
