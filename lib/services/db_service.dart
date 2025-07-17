@@ -87,4 +87,50 @@ class DbService {
       version: 1,
     );
   }
+
+  static Future<List<Map<String, dynamic>>> getPaged({
+    required String tableName,
+    required int limit,
+    required int offset,
+    String? orderBy,
+  }) async {
+    final db = await _getDatabase();
+    return await db.query(
+      tableName,
+      limit: limit,
+      offset: offset,
+      orderBy: orderBy,
+    );
+  }
+
+  static Future<int> count(String tableName) async {
+    final db = await _getDatabase();
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM $tableName',
+    );
+    return result.first['count'] as int? ?? 0;
+  }
+
+  static Future<List<Map<String, dynamic>>> search({
+    required String tableName,
+    required String query,
+    required List<String> fields,
+    int limit = 20,
+    int offset = 0,
+    String? orderBy,
+  }) async {
+    final db = await _getDatabase();
+    final trimmedQuery = query.trim();
+    final likeQuery = '%$trimmedQuery%';
+    final where = fields.map((f) => '$f LIKE ?').join(' OR ');
+    final whereArgs = List.filled(fields.length, likeQuery);
+    return await db.query(
+      tableName,
+      where: where,
+      whereArgs: whereArgs,
+      limit: limit,
+      offset: offset,
+      orderBy: orderBy,
+    );
+  }
 }
