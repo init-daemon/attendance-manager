@@ -6,6 +6,7 @@ import 'package:presence_manager/features/event_organization/models/event_organi
 import 'package:presence_manager/features/event_organization/widgets/event_organizations_table.dart';
 import 'package:presence_manager/services/db_service.dart';
 import 'package:presence_manager/shared/constants/pagination_constants.dart';
+import 'dart:async';
 
 class EventViewScreen extends StatefulWidget {
   final Event event;
@@ -22,6 +23,8 @@ class _EventViewScreenState extends State<EventViewScreen> {
   int _pageSize = PaginationConstants.defaultPageSize;
   int _totalOrgs = 0;
   late Future<List<EventOrganization>> _orgsFuture;
+  String _searchText = '';
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -30,25 +33,58 @@ class _EventViewScreenState extends State<EventViewScreen> {
   }
 
   void _loadOrgs() {
-    setState(() {
-      _orgsFuture =
-          DbService.getPaged(
-            tableName: 'event_organizations',
-            limit: _pageSize,
-            offset: _currentPage * _pageSize,
-            orderBy: 'date DESC',
-          ).then(
-            (maps) => maps
-                .map((map) => EventOrganization.fromMap(map))
-                .where((org) => org.eventId == widget.event.id)
-                .toList(),
-          );
-      DbService.count('event_organizations').then((count) {
-        setState(() {
-          _totalOrgs = count;
+    if (_searchText.isEmpty) {
+      setState(() {
+        _orgsFuture =
+            DbService.getPaged(
+              tableName: 'event_organizations',
+              limit: _pageSize,
+              offset: _currentPage * _pageSize,
+              orderBy: 'date DESC',
+            ).then(
+              (maps) => maps
+                  .map((map) => EventOrganization.fromMap(map))
+                  .where((org) => org.eventId == widget.event.id)
+                  .toList(),
+            );
+        DbService.count('event_organizations').then((count) {
+          setState(() {
+            _totalOrgs = count;
+          });
         });
       });
-    });
+    } else {
+      setState(() {
+        _orgsFuture =
+            DbService.search(
+              tableName: 'event_organizations',
+              query: _searchText,
+              fields: ['location', 'description'],
+              limit: _pageSize,
+              offset: _currentPage * _pageSize,
+              orderBy: 'date DESC',
+            ).then(
+              (maps) => maps
+                  .map((map) => EventOrganization.fromMap(map))
+                  .where((org) => org.eventId == widget.event.id)
+                  .toList(),
+            );
+        DbService.search(
+          tableName: 'event_organizations',
+          query: _searchText,
+          fields: ['location', 'description'],
+          limit: 1000000,
+          offset: 0,
+        ).then((maps) {
+          setState(() {
+            _totalOrgs = maps
+                .map((map) => EventOrganization.fromMap(map))
+                .where((org) => org.eventId == widget.event.id)
+                .length;
+          });
+        });
+      });
+    }
   }
 
   void _onPageSizeChanged(int? value) {
@@ -68,7 +104,22 @@ class _EventViewScreenState extends State<EventViewScreen> {
     _loadOrgs();
   }
 
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _searchText = value;
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      _currentPage = 0;
+      _loadOrgs();
+    });
+  }
+
   int get totalPages => (_totalOrgs / _pageSize).ceil();
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -150,33 +201,45 @@ class _EventViewScreenState extends State<EventViewScreen> {
                   horizontal: 16,
                   vertical: 8,
                 ),
-                child: Row(
+                child: Column(
                   children: [
-                    const Text('Événements organisés associés :'),
-                    const Spacer(),
-                    DropdownButton<int>(
-                      value: _pageSize,
-                      items: PaginationConstants.pageSizes
-                          .map(
-                            (size) => DropdownMenuItem(
-                              value: size,
-                              child: Text('$size'),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: _onPageSizeChanged,
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Recherche (localisation ou description)',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                      onChanged: _onSearchChanged,
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.chevron_left),
-                      onPressed: _currentPage > 0
-                          ? () => _onPageChanged(_currentPage - 1)
-                          : null,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.chevron_right),
-                      onPressed: _currentPage < totalPages - 1
-                          ? () => _onPageChanged(_currentPage + 1)
-                          : null,
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Text('Événements organisés associés :'),
+                        const Spacer(),
+                        DropdownButton<int>(
+                          value: _pageSize,
+                          items: PaginationConstants.pageSizes
+                              .map(
+                                (size) => DropdownMenuItem(
+                                  value: size,
+                                  child: Text('$size'),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: _onPageSizeChanged,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.chevron_left),
+                          onPressed: _currentPage > 0
+                              ? () => _onPageChanged(_currentPage - 1)
+                              : null,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.chevron_right),
+                          onPressed: _currentPage < totalPages - 1
+                              ? () => _onPageChanged(_currentPage + 1)
+                              : null,
+                        ),
+                      ],
                     ),
                   ],
                 ),
