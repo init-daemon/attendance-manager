@@ -62,13 +62,6 @@ class EventTableService {
     await db.delete('events', where: 'id = ?', whereArgs: [id]);
   }
 
-  static Future<List<Event>> getAll() async {
-    final db = await AppDbService.database;
-    final List<Map<String, dynamic>> maps = await db.query('events');
-
-    return maps.map((map) => Event.fromMap(map)).toList();
-  }
-
   static Future<Event?> getById(String id) async {
     final db = await AppDbService.database;
     final List<Map<String, dynamic>> maps = await db.query(

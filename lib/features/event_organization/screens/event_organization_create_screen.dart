@@ -6,6 +6,7 @@ import 'package:presence_manager/features/event/models/event.dart';
 import 'package:presence_manager/services/event_table_service.dart';
 import 'package:presence_manager/features/event/widgets/event_form.dart';
 import 'package:presence_manager/core/widgets/app_layout.dart';
+import 'package:presence_manager/services/db_service.dart';
 
 class EventOrganizationCreateScreen extends StatefulWidget {
   const EventOrganizationCreateScreen({super.key});
@@ -26,32 +27,122 @@ class _EventOrganizationCreateScreenState
   }
 
   Future<void> _selectExistingEvent() async {
-    final events = await EventTableService.getAll();
-    showDialog(
+    int pageSize = 10;
+    int currentPage = 0;
+    String searchText = '';
+    List<Event> events = [];
+
+    Future<void> loadEvents() async {
+      final maps = await DbService.getPaged(
+        tableName: 'events',
+        limit: pageSize,
+        offset: currentPage * pageSize,
+        orderBy: 'name ASC',
+      );
+      events = maps.map((map) => Event.fromMap(map)).toList();
+    }
+
+    await loadEvents();
+
+    await showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Choisir un événement existant'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: events.length,
-              itemBuilder: (context, index) {
-                final event = events[index];
-                return ListTile(
-                  title: Text(event.name),
-                  onTap: () {
-                    setState(() {
-                      _selectedEventId = event.id;
-                      _selectedEvent = event;
-                    });
-                    Navigator.pop(context);
-                  },
-                );
-              },
-            ),
-          ),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Choisir un événement existant'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Recherche',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                      onChanged: (value) async {
+                        searchText = value;
+                        currentPage = 0;
+                        if (searchText.trim().isEmpty) {
+                          final maps = await DbService.getPaged(
+                            tableName: 'events',
+                            limit: pageSize,
+                            offset: 0,
+                            orderBy: 'name ASC',
+                          );
+                          setState(() {
+                            events = maps
+                                .map((map) => Event.fromMap(map))
+                                .toList();
+                          });
+                        } else {
+                          final maps = await DbService.search(
+                            tableName: 'events',
+                            query: searchText,
+                            fields: ['name'],
+                            limit: pageSize,
+                            offset: 0,
+                            orderBy: 'name ASC',
+                          );
+                          setState(() {
+                            events = maps
+                                .map((map) => Event.fromMap(map))
+                                .toList();
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: events.length,
+                        itemBuilder: (context, index) {
+                          final event = events[index];
+                          return ListTile(
+                            title: Text(event.name),
+                            onTap: () {
+                              setState(() {
+                                _selectedEventId = event.id;
+                                _selectedEvent = event;
+                              });
+                              Navigator.pop(context);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.chevron_left),
+                          onPressed: currentPage > 0
+                              ? () async {
+                                  currentPage--;
+                                  await loadEvents();
+                                  setState(() {});
+                                }
+                              : null,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.chevron_right),
+                          onPressed: events.length == pageSize
+                              ? () async {
+                                  currentPage++;
+                                  await loadEvents();
+                                  setState(() {});
+                                }
+                              : null,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );

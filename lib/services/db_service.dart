@@ -11,8 +11,10 @@ class DbService {
       await _deleteDatabase();
     }
 
+    await _createTables();
+
     await _initializeTable(
-      getAll: MemberTableService.getAll,
+      tableName: 'members',
       clear: MemberTableService.clear,
       seed: (count) => MemberTableService.seed(count: count),
       fresh: fresh,
@@ -20,7 +22,7 @@ class DbService {
     );
 
     await _initializeTable(
-      getAll: EventTableService.getAll,
+      tableName: 'events',
       clear: EventTableService.clear,
       seed: (count) => EventTableService.seed(count: count),
       fresh: fresh,
@@ -28,12 +30,19 @@ class DbService {
     );
 
     await _initializeTable(
-      getAll: EventOrganizationTableService.getAll,
+      tableName: 'event_organizations',
       clear: EventOrganizationTableService.clear,
       seed: (count) => EventOrganizationTableService.seed(count: count),
       fresh: fresh,
       seedCount: 5,
     );
+  }
+
+  static Future<void> _createTables() async {
+    final db = await _getDatabase();
+    await MemberTableService.createTable(db);
+    await EventTableService.createTable(db);
+    await EventOrganizationTableService.createTable(db);
   }
 
   static Future<dynamic> getRandomRow({
@@ -65,13 +74,17 @@ class DbService {
   }
 
   static Future<void> _initializeTable({
-    required Future<List<dynamic>> Function() getAll,
+    required String tableName,
     required Future<void> Function() clear,
     required Future<void> Function(int) seed,
     required bool fresh,
     required int seedCount,
   }) async {
-    final items = await getAll();
+    final db = await _getDatabase();
+    final List<Map<String, dynamic>> items = await db.query(
+      tableName,
+      limit: 1,
+    );
 
     if (fresh || items.isEmpty) {
       if (!fresh) {
