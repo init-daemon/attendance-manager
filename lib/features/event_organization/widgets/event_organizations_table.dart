@@ -20,6 +20,12 @@ class EventOrganizationsTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (organizations.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(24.0),
+        child: Center(child: Text('Aucun évènement organisé associé')),
+      );
+    }
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: SingleChildScrollView(
