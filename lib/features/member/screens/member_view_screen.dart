@@ -48,6 +48,29 @@ class MemberViewScreen extends StatelessWidget {
                         'Statut',
                         member.isHidden ? 'Caché' : 'Visible',
                       ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.edit),
+                            label: const Text('Modifier'),
+                            onPressed: () => _navigateToEditScreen(context),
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.list),
+                            label: const Text('Liste'),
+                            onPressed: () {
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                '/members',
+                                (route) => false,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),

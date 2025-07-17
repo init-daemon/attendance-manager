@@ -85,22 +85,39 @@ class _MemberFormState extends State<MemberForm> {
               });
             },
           ),
-          ElevatedButton(
-            onPressed: () {
-              if (_formKey.currentState!.validate()) {
-                final member = Member(
-                  id:
-                      widget.member?.id ??
-                      DateTime.now().millisecondsSinceEpoch.toString(),
-                  firstName: _firstNameController.text,
-                  lastName: _lastNameController.text,
-                  birthDate: _birthDate,
-                  isHidden: _isHidden,
-                );
-                widget.onSave(member);
-              }
-            },
-            child: const Text('Enregistrer'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              ElevatedButton.icon(
+                icon: const Icon(Icons.cancel),
+                label: const Text('Annuler'),
+                onPressed: () {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/members',
+                    (route) => false,
+                  );
+                },
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    final member = Member(
+                      id:
+                          widget.member?.id ??
+                          DateTime.now().millisecondsSinceEpoch.toString(),
+                      firstName: _firstNameController.text,
+                      lastName: _lastNameController.text,
+                      birthDate: _birthDate,
+                      isHidden: _isHidden,
+                    );
+                    widget.onSave(member);
+                  }
+                },
+                child: const Text('Enregistrer'),
+              ),
+            ],
           ),
         ],
       ),

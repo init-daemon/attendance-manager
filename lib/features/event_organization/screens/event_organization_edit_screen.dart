@@ -20,7 +20,10 @@ class EventOrganizationEditScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Modifier l\'événement organisé')),
+      appBar: AppBar(
+        title: const Text('Modifier l\'événement organisé'),
+        automaticallyImplyLeading: false,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
