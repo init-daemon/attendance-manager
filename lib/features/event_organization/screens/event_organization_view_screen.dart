@@ -47,6 +47,35 @@ class EventOrganizationViewScreen extends StatelessWidget {
                   'Description',
                   eventOrganization.description ?? '',
                 ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.edit),
+                      label: const Text('Modifier'),
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/event-organizations/edit',
+                          arguments: eventOrganization,
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.list),
+                      label: const Text('Liste'),
+                      onPressed: () {
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          '/event-organizations',
+                          (route) => false,
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

@@ -33,6 +33,27 @@ class _EventOrganizationsListScreenState
     _refresh();
   }
 
+  void _navigateToParticipants(
+    BuildContext context,
+    EventOrganization org,
+  ) async {
+    await Navigator.pushNamed(
+      context,
+      '/event-organization/participants',
+      arguments: {'eventOrganizationId': org.id, 'eventOrganization': org},
+    );
+    _refresh();
+  }
+
+  void _navigateToEdit(BuildContext context, EventOrganization org) async {
+    await Navigator.pushNamed(
+      context,
+      '/event-organizations/edit',
+      arguments: org,
+    );
+    _refresh();
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppLayout(
@@ -51,6 +72,9 @@ class _EventOrganizationsListScreenState
                   child: EventOrganizationsTable(
                     organizations: snapshot.data!,
                     onEdit: _refresh,
+                    onManageParticipants: (org) =>
+                        _navigateToParticipants(context, org),
+                    onEditOrganization: (org) => _navigateToEdit(context, org),
                   ),
                 ),
                 Padding(

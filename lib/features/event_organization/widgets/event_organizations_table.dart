@@ -2,15 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:presence_manager/features/event_organization/models/event_organization.dart';
 import 'package:presence_manager/services/date_service.dart';
 import 'package:presence_manager/services/event_table_service.dart';
+import 'package:presence_manager/services/event_participant_table_service.dart';
 
 class EventOrganizationsTable extends StatelessWidget {
   final List<EventOrganization> organizations;
   final VoidCallback? onEdit;
+  final Function(EventOrganization)? onManageParticipants;
+  final Function(EventOrganization)? onEditOrganization;
 
   const EventOrganizationsTable({
     super.key,
     required this.organizations,
     this.onEdit,
+    this.onManageParticipants,
+    this.onEditOrganization,
   });
 
   @override
@@ -25,6 +30,7 @@ class EventOrganizationsTable extends StatelessWidget {
             DataColumn(label: Text('Date')),
             DataColumn(label: Text('Localisation')),
             DataColumn(label: Text('Description')),
+            DataColumn(label: Text('Participants')), // Nouvelle colonne
             DataColumn(label: Text('Actions')),
           ],
           rows: organizations.map((org) {
@@ -52,6 +58,28 @@ class EventOrganizationsTable extends StatelessWidget {
                 DataCell(Text(org.location)),
                 DataCell(Text(org.description ?? '')),
                 DataCell(
+                  FutureBuilder(
+                    future:
+                        EventParticipantTableService.getByEventOrganizationId(
+                          org.id,
+                        ),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const SizedBox(
+                          width: 40,
+                          height: 16,
+                          child: LinearProgressIndicator(),
+                        );
+                      }
+                      if (snapshot.hasData) {
+                        final participants = snapshot.data as List;
+                        return Text('${participants.length}');
+                      }
+                      return const Text('0');
+                    },
+                  ),
+                ),
+                DataCell(
                   Row(
                     children: [
                       IconButton(
@@ -66,13 +94,18 @@ class EventOrganizationsTable extends StatelessWidget {
                       ),
                       IconButton(
                         icon: const Icon(Icons.edit),
-                        onPressed: () async {
-                          final result = await Navigator.pushNamed(
-                            context,
-                            '/event-organizations/edit',
-                            arguments: org,
-                          );
-                          if (result != null && onEdit != null) onEdit!();
+                        onPressed: () {
+                          if (onEditOrganization != null) {
+                            onEditOrganization!(org);
+                          }
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.group),
+                        onPressed: () {
+                          if (onManageParticipants != null) {
+                            onManageParticipants!(org);
+                          }
                         },
                       ),
                     ],
