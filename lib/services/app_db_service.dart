@@ -25,9 +25,13 @@ class AppDbService {
       path,
       version: 1,
       onCreate: (db, version) async {
+        await db.execute('PRAGMA foreign_keys = ON;');
         await MemberTableService.createTable(db);
         await EventTableService.createTable(db);
         await EventOrganizationTableService.createTable(db);
+      },
+      onOpen: (db) async {
+        await db.execute('PRAGMA foreign_keys = ON;');
       },
     );
   }

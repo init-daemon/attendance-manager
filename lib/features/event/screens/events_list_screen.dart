@@ -106,6 +106,44 @@ class _EventsListScreenState extends State<EventsListScreen> {
     });
   }
 
+  Future<void> _deleteEvent(BuildContext context, Event event) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirmer la suppression'),
+        content: const Text(
+          "Supprimer cet événement entraînera également la suppression de tous les événements organisés associés. Voulez-vous vraiment continuer ?",
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Annuler'),
+            onPressed: () => Navigator.of(ctx).pop(false),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.delete),
+            label: const Text('Supprimer'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await DbService.deleteById(tableName: 'events', id: event.id);
+      _refreshEvents();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Événement supprimé avec succès'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   int get totalPages => (_totalEvents / _pageSize).ceil();
 
   @override
@@ -196,6 +234,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
                   return EventsTable(
                     events: pagedEvents,
                     onEdit: _refreshEvents,
+                    onDelete: (event) => _deleteEvent(context, event),
                   );
                 }
               },
