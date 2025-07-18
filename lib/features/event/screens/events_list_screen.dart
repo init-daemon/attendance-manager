@@ -173,6 +173,26 @@ class _EventsListScreenState extends State<EventsListScreen> {
                   return Center(child: Text('Erreur: ${snapshot.error}'));
                 } else {
                   final pagedEvents = snapshot.data ?? [];
+                  if (pagedEvents.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Aucun événement trouvé.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.add),
+                            label: const Text('Créer un événement'),
+                            onPressed: () => _navigateToCreateScreen(context),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
                   return EventsTable(
                     events: pagedEvents,
                     onEdit: _refreshEvents,

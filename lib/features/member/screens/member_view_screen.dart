@@ -3,32 +3,18 @@ import 'package:presence_manager/features/member/models/member.dart';
 import 'package:presence_manager/features/member/widgets/profile_avatar.dart';
 import 'package:presence_manager/core/widgets/app_layout.dart';
 import 'package:presence_manager/features/member/screens/member_edit_screen.dart';
-import 'package:presence_manager/features/event_organization/models/event_organization.dart';
-import 'package:presence_manager/features/event_organization/models/event_participant.dart';
-import 'package:presence_manager/features/event/models/event.dart';
 import 'package:presence_manager/services/db_service.dart';
+import 'package:presence_manager/shared/constants/pagination_constants.dart';
 
-class _MemberStats {
+class _EventStat {
+  final String eventName;
   final int presentCount;
   final int absentCount;
-  final List<_EventParticipation> participations;
 
-  _MemberStats({
+  _EventStat({
+    required this.eventName,
     required this.presentCount,
     required this.absentCount,
-    required this.participations,
-  });
-}
-
-class _EventParticipation {
-  final String eventName;
-  final DateTime date;
-  final String status;
-
-  _EventParticipation({
-    required this.eventName,
-    required this.date,
-    required this.status,
   });
 }
 
@@ -45,9 +31,10 @@ class MemberViewScreen extends StatefulWidget {
 class _MemberViewScreenState extends State<MemberViewScreen> {
   DateTime? startDate;
   DateTime? endDate;
-  _MemberStats? orgStats;
-  _MemberStats? eventStats;
   bool loading = true;
+  int eventCurrentPage = 0;
+  int eventPageSize = PaginationConstants.defaultPageSize;
+  List<_EventStat> eventStats = [];
 
   @override
   void initState() {
@@ -58,85 +45,67 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
   Future<void> _loadStats() async {
     setState(() => loading = true);
 
-    final orgParticipationsMaps = await DbService.getByField(
+    final participantMaps = await DbService.getByField(
       tableName: 'event_participants',
       field: 'individual_id',
       value: widget.member.id,
     );
-    final orgs = <_EventParticipation>[];
-    for (final pMap in orgParticipationsMaps) {
-      final p = EventParticipant.fromMap(pMap);
-      final orgMaps = await DbService.getByField(
+
+    final orgIds = participantMaps
+        .map((p) => p['event_organization_id'] as String)
+        .toSet()
+        .toList();
+    final orgMaps = <String, Map<String, dynamic>>{};
+    for (final orgId in orgIds) {
+      final orgList = await DbService.getByField(
         tableName: 'event_organizations',
         field: 'id',
-        value: p.eventOrganizationId,
+        value: orgId,
       );
-      if (orgMaps.isEmpty) continue;
-      final org = EventOrganization.fromMap(orgMaps.first);
-      if (_isInInterval(org.date)) {
-        final eventMaps = await DbService.getByField(
-          tableName: 'events',
-          field: 'id',
-          value: org.eventId,
-        );
-        final eventName = eventMaps.isNotEmpty
-            ? eventMaps.first['name'] ?? 'Événement organisé'
-            : 'Événement organisé';
-        orgs.add(
-          _EventParticipation(
-            eventName: eventName,
-            date: org.date,
-            status: p.isPresent ? 'Présent' : 'Absent',
-          ),
-        );
+      if (orgList.isNotEmpty) {
+        orgMaps[orgId] = orgList.first;
       }
     }
-    orgs.sort((a, b) => b.date.compareTo(a.date));
-    final orgPresent = orgs.where((e) => e.status == 'Présent').length;
-    final orgAbsent = orgs.where((e) => e.status == 'Absent').length;
 
-    final events = <_EventParticipation>[];
-    for (final pMap in orgParticipationsMaps) {
-      final p = EventParticipant.fromMap(pMap);
-      final orgMaps = await DbService.getByField(
-        tableName: 'event_organizations',
-        field: 'id',
-        value: p.eventOrganizationId,
-      );
-      if (orgMaps.isEmpty) continue;
-      final org = EventOrganization.fromMap(orgMaps.first);
-      final eventMaps = await DbService.getByField(
+    final Map<String, List<Map<String, dynamic>>> eventGroups = {};
+    for (final p in participantMaps) {
+      final orgId = p['event_organization_id'] as String;
+      final org = orgMaps[orgId];
+      if (org == null) continue;
+      final eventId = org['event_id'] as String;
+      final orgDate = DateTime.parse(org['date']);
+      if (!_isInInterval(orgDate)) continue;
+      eventGroups.putIfAbsent(eventId, () => []).add(p);
+    }
+
+    final List<_EventStat> stats = [];
+    for (final eventId in eventGroups.keys) {
+      final eventMapList = await DbService.getByField(
         tableName: 'events',
         field: 'id',
-        value: org.eventId,
+        value: eventId,
       );
-      if (eventMaps.isEmpty) continue;
-      final event = Event.fromMap(eventMaps.first);
-      if (_isInInterval(event.createdAt)) {
-        events.add(
-          _EventParticipation(
-            eventName: event.name,
-            date: event.createdAt,
-            status: p.isPresent ? 'Présent' : 'Absent',
-          ),
-        );
-      }
+      final eventName = eventMapList.isNotEmpty
+          ? eventMapList.first['name'] ?? 'Événement'
+          : 'Événement';
+      final group = eventGroups[eventId]!;
+      final presentCount = group
+          .where((p) => (p['is_present'] ?? 0) == 1)
+          .length;
+      final absentCount = group
+          .where((p) => (p['is_present'] ?? 0) == 0)
+          .length;
+      stats.add(
+        _EventStat(
+          eventName: eventName,
+          presentCount: presentCount,
+          absentCount: absentCount,
+        ),
+      );
     }
-    events.sort((a, b) => b.date.compareTo(a.date));
-    final eventPresent = events.where((e) => e.status == 'Présent').length;
-    final eventAbsent = events.where((e) => e.status == 'Absent').length;
 
     setState(() {
-      orgStats = _MemberStats(
-        presentCount: orgPresent,
-        absentCount: orgAbsent,
-        participations: orgs,
-      );
-      eventStats = _MemberStats(
-        presentCount: eventPresent,
-        absentCount: eventAbsent,
-        participations: events,
-      );
+      eventStats = stats;
       loading = false;
     });
   }
@@ -284,19 +253,6 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Participation aux événements organisés',
-                                  style: Theme.of(context).textTheme.titleLarge
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.orange[700],
-                                      ),
-                                ),
-                                const SizedBox(height: 8),
-                                _buildStatBadges(orgStats),
-                                const SizedBox(height: 8),
-                                _buildStatsList(orgStats, Icons.groups),
-                                const Divider(height: 32),
-                                Text(
                                   'Participation aux événements',
                                   style: Theme.of(context).textTheme.titleLarge
                                       ?.copyWith(
@@ -305,9 +261,32 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                                       ),
                                 ),
                                 const SizedBox(height: 8),
-                                _buildStatBadges(eventStats),
-                                const SizedBox(height: 8),
-                                _buildStatsList(eventStats, Icons.event),
+                                Row(
+                                  children: [
+                                    const Text('Afficher :'),
+                                    const SizedBox(width: 8),
+                                    DropdownButton<int>(
+                                      value: eventPageSize,
+                                      items: PaginationConstants.pageSizes
+                                          .map(
+                                            (size) => DropdownMenuItem(
+                                              value: size,
+                                              child: Text('$size'),
+                                            ),
+                                          )
+                                          .toList(),
+                                      onChanged: (value) {
+                                        if (value != null) {
+                                          setState(() {
+                                            eventPageSize = value;
+                                            eventCurrentPage = 0;
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                _buildEventStatsPaged(),
                               ],
                             ),
                     ],
@@ -336,96 +315,150 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
     );
   }
 
-  Widget _buildStatBadges(_MemberStats? stats) {
-    if (stats == null) return const SizedBox.shrink();
+  Widget _buildEventStatsPaged() {
     final theme = Theme.of(context);
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.secondary,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.check_circle,
-                color: theme.colorScheme.onSecondary,
-                size: 18,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'Présent : ${stats.presentCount}',
-                style: TextStyle(
-                  color: theme.colorScheme.onSecondary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.error,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.cancel, color: theme.colorScheme.onError, size: 18),
-              const SizedBox(width: 6),
-              Text(
-                'Absent : ${stats.absentCount}',
-                style: TextStyle(
-                  color: theme.colorScheme.onError,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+    final totalItems = eventStats.length;
+    final totalPages = (totalItems / eventPageSize).ceil();
+    final start = eventCurrentPage * eventPageSize;
+    final end = (start + eventPageSize).clamp(0, totalItems);
+    final pageItems = eventStats.sublist(start, end);
 
-  Widget _buildStatsList(_MemberStats? stats, IconData icon) {
-    if (stats == null) return const SizedBox.shrink();
-    final theme = Theme.of(context);
     return Column(
-      children: stats.participations
-          .map(
-            (p) => Card(
-              elevation: 2,
-              margin: const EdgeInsets.symmetric(vertical: 4),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+      children: [
+        ...pageItems.map(
+          (stat) => Card(
+            elevation: 2,
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ListTile(
+              leading: const Icon(Icons.event),
+              title: Text(
+                stat.eventName,
+                style: const TextStyle(fontWeight: FontWeight.w500),
               ),
-              child: ListTile(
-                leading: Icon(
-                  icon,
-                  color: p.status == 'Présent'
-                      ? theme.colorScheme.secondary
-                      : theme.colorScheme.error,
-                ),
-                title: Text(
-                  p.eventName,
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-                subtitle: Text(
-                  '${p.status} • ${p.date.day.toString().padLeft(2, '0')}/${p.date.month.toString().padLeft(2, '0')}/${p.date.year}',
-                  style: TextStyle(
-                    color: p.status == 'Présent'
-                        ? theme.colorScheme.secondary
-                        : theme.colorScheme.error,
-                    fontWeight: FontWeight.w500,
+              subtitle: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle,
+                          color: theme.colorScheme.onSecondary,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Présent : ${stat.presentCount}',
+                          style: TextStyle(
+                            color: theme.colorScheme.onSecondary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.error,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.cancel,
+                          color: theme.colorScheme.onError,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Absent : ${stat.absentCount}',
+                          style: TextStyle(
+                            color: theme.colorScheme.onError,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.group,
+                          color: theme.colorScheme.primary,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Participations : ${stat.presentCount + stat.absentCount}',
+                          style: TextStyle(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-          )
-          .toList(),
+          ),
+        ),
+        if (totalPages > 1)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left),
+                  tooltip: 'Page précédente',
+                  onPressed: eventCurrentPage > 0
+                      ? () => setState(() => eventCurrentPage -= 1)
+                      : null,
+                ),
+                Text(
+                  'Page ${eventCurrentPage + 1} / $totalPages',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  tooltip: 'Page suivante',
+                  onPressed: eventCurrentPage < totalPages - 1
+                      ? () => setState(() => eventCurrentPage += 1)
+                      : null,
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 

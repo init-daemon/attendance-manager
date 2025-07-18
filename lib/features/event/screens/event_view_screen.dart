@@ -5,6 +5,7 @@ import 'package:presence_manager/features/event/screens/event_edit_screen.dart';
 import 'package:presence_manager/features/event_organization/models/event_organization.dart';
 import 'package:presence_manager/features/event_organization/widgets/event_organizations_table.dart';
 import 'package:presence_manager/services/db_service.dart';
+import 'package:presence_manager/services/event_participant_table_service.dart';
 import 'package:presence_manager/shared/constants/pagination_constants.dart';
 import 'dart:async';
 
@@ -26,10 +27,15 @@ class _EventViewScreenState extends State<EventViewScreen> {
   String _searchText = '';
   Timer? _debounce;
 
+  int presentCount = 0;
+  int absentCount = 0;
+  bool statsLoading = true;
+
   @override
   void initState() {
     super.initState();
     _loadOrgs();
+    _loadParticipationStats();
   }
 
   void _loadOrgs() {
@@ -85,6 +91,34 @@ class _EventViewScreenState extends State<EventViewScreen> {
         });
       });
     }
+  }
+
+  Future<void> _loadParticipationStats() async {
+    setState(() => statsLoading = true);
+    final orgMaps = await DbService.getByField(
+      tableName: 'event_organizations',
+      field: 'event_id',
+      value: widget.event.id,
+    );
+    int present = 0;
+    int absent = 0;
+    for (final orgMap in orgMaps) {
+      final orgId = orgMap['id'] as String;
+      final participants =
+          await EventParticipantTableService.getByEventOrganizationId(orgId);
+      for (final p in participants) {
+        if (p.isPresent) {
+          present++;
+        } else {
+          absent++;
+        }
+      }
+    }
+    setState(() {
+      presentCount = present;
+      absentCount = absent;
+      statsLoading = false;
+    });
   }
 
   void _onPageSizeChanged(int? value) {
@@ -158,6 +192,78 @@ class _EventViewScreenState extends State<EventViewScreen> {
                         '${widget.event.createdAt.day}/${widget.event.createdAt.month}/${widget.event.createdAt.year}',
                       ),
                       const SizedBox(height: 24),
+                      statsLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.secondary,
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSecondary,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Présent : $presentCount',
+                                        style: TextStyle(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSecondary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.error,
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.cancel,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onError,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Absent : $absentCount',
+                                        style: TextStyle(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onError,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                      const SizedBox(height: 24),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -211,54 +317,6 @@ class _EventViewScreenState extends State<EventViewScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: Column(
-                  children: [
-                    TextField(
-                      decoration: const InputDecoration(
-                        labelText: 'Recherche (localisation ou description)',
-                        prefixIcon: Icon(Icons.search),
-                      ),
-                      onChanged: _onSearchChanged,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Text('Événements organisés associés :'),
-                        const Spacer(),
-                        DropdownButton<int>(
-                          value: _pageSize,
-                          items: PaginationConstants.pageSizes
-                              .map(
-                                (size) => DropdownMenuItem(
-                                  value: size,
-                                  child: Text('$size'),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: _onPageSizeChanged,
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.chevron_left),
-                          onPressed: _currentPage > 0
-                              ? () => _onPageChanged(_currentPage - 1)
-                              : null,
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.chevron_right),
-                          onPressed: _currentPage < totalPages - 1
-                              ? () => _onPageChanged(_currentPage + 1)
-                              : null,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
               FutureBuilder<List<EventOrganization>>(
                 future: _orgsFuture,
                 builder: (context, snapshot) {
@@ -268,26 +326,102 @@ class _EventViewScreenState extends State<EventViewScreen> {
                     return Center(child: Text('Erreur: ${snapshot.error}'));
                   } else {
                     final orgs = snapshot.data ?? [];
-                    return EventOrganizationsTable(
-                      organizations: orgs,
-                      onEdit: _loadOrgs,
-                      onManageParticipants: (org) {
-                        Navigator.pushNamed(
-                          context,
-                          '/event-organization/participants',
-                          arguments: {
-                            'eventOrganizationId': org.id,
-                            'eventOrganization': org,
+                    if (orgs.isEmpty) {
+                      return Column(
+                        children: [
+                          const Text(
+                            'Aucun événement organisé associé.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.add),
+                            label: const Text('Organiser un évènement'),
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                '/event-organizations/create',
+                                arguments: widget.event,
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    }
+                    return Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          child: Column(
+                            children: [
+                              TextField(
+                                decoration: const InputDecoration(
+                                  labelText:
+                                      'Recherche (localisation ou description)',
+                                  prefixIcon: Icon(Icons.search),
+                                ),
+                                onChanged: _onSearchChanged,
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Text('Événements organisés associés :'),
+                                  const Spacer(),
+                                  DropdownButton<int>(
+                                    value: _pageSize,
+                                    items: PaginationConstants.pageSizes
+                                        .map(
+                                          (size) => DropdownMenuItem(
+                                            value: size,
+                                            child: Text('$size'),
+                                          ),
+                                        )
+                                        .toList(),
+                                    onChanged: _onPageSizeChanged,
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.chevron_left),
+                                    onPressed: _currentPage > 0
+                                        ? () => _onPageChanged(_currentPage - 1)
+                                        : null,
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.chevron_right),
+                                    onPressed: _currentPage < totalPages - 1
+                                        ? () => _onPageChanged(_currentPage + 1)
+                                        : null,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        EventOrganizationsTable(
+                          organizations: orgs,
+                          onEdit: _loadOrgs,
+                          onManageParticipants: (org) {
+                            Navigator.pushNamed(
+                              context,
+                              '/event-organization/participants',
+                              arguments: {
+                                'eventOrganizationId': org.id,
+                                'eventOrganization': org,
+                              },
+                            );
                           },
-                        );
-                      },
-                      onEditOrganization: (org) {
-                        Navigator.pushNamed(
-                          context,
-                          '/event-organizations/edit',
-                          arguments: org,
-                        );
-                      },
+                          onEditOrganization: (org) {
+                            Navigator.pushNamed(
+                              context,
+                              '/event-organizations/edit',
+                              arguments: org,
+                            );
+                          },
+                        ),
+                      ],
                     );
                   }
                 },
