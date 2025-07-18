@@ -200,6 +200,26 @@ class _EventOrganizationsListScreenState
                   return Center(child: Text('Erreur: ${snapshot.error}'));
                 } else {
                   final pagedOrgs = snapshot.data ?? [];
+                  if (pagedOrgs.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Aucune organisation d\'événement trouvée.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.add),
+                            label: const Text('Organiser un évènement'),
+                            onPressed: () => _navigateToCreate(context),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
                   return EventOrganizationsTable(
                     organizations: pagedOrgs,
                     onEdit: _refresh,

@@ -173,6 +173,26 @@ class _MembersListScreenState extends State<MembersListScreen> {
                   return Center(child: Text('Erreur: ${snapshot.error}'));
                 } else {
                   final pagedMembers = snapshot.data ?? [];
+                  if (pagedMembers.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Aucun membre trouvé.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.add),
+                            label: const Text('Créer un membre'),
+                            onPressed: () => _navigateToCreateScreen(context),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
                   return MembersTable(
                     members: pagedMembers,
                     onEdit: _refreshMembers,

@@ -21,6 +21,7 @@ class _EventOrganizationCreateScreenState
     extends State<EventOrganizationCreateScreen> {
   String? _selectedEventId;
   Event? _selectedEvent;
+  bool _hasEvents = false;
 
   Future<String> _save(EventOrganization org) async {
     await EventOrganizationTableService.insert(org);
@@ -172,6 +173,13 @@ class _EventOrganizationCreateScreenState
     );
   }
 
+  Future<void> _checkHasEvents() async {
+    final count = await DbService.count('events');
+    setState(() {
+      _hasEvents = count > 0;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -179,6 +187,7 @@ class _EventOrganizationCreateScreenState
       _selectedEventId = widget.event!.id;
       _selectedEvent = widget.event;
     }
+    _checkHasEvents();
   }
 
   @override
@@ -190,11 +199,12 @@ class _EventOrganizationCreateScreenState
         child: Column(
           children: [
             if (_selectedEventId == null) ...[
-              ElevatedButton.icon(
-                icon: const Icon(Icons.search),
-                label: const Text('Choisir un événement existant'),
-                onPressed: _selectExistingEvent,
-              ),
+              if (_hasEvents)
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.search),
+                  label: const Text('Choisir un événement existant'),
+                  onPressed: _selectExistingEvent,
+                ),
               const SizedBox(height: 8),
               ElevatedButton.icon(
                 icon: const Icon(Icons.add),

@@ -146,4 +146,13 @@ class DbService {
       orderBy: orderBy,
     );
   }
+
+  static Future<List<Map<String, dynamic>>> getByField({
+    required String tableName,
+    required String field,
+    required dynamic value,
+  }) async {
+    final db = await _getDatabase();
+    return await db.query(tableName, where: '$field = ?', whereArgs: [value]);
+  }
 }

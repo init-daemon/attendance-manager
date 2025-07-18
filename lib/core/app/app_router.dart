@@ -18,12 +18,13 @@ import 'package:presence_manager/features/event_organization/models/event_organi
 import 'package:presence_manager/features/event_organization/screens/event_organization_participants_screen.dart';
 import 'package:presence_manager/core/widgets/error_page.dart';
 import 'package:presence_manager/core/widgets/app_layout.dart';
+import 'package:presence_manager/features/dashboard/screens/dashboard_screen.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case '/':
-        return MaterialPageRoute(builder: (_) => const MembersListScreen());
+        return MaterialPageRoute(builder: (_) => const DashboardScreen());
       case '/members':
         return MaterialPageRoute(builder: (_) => const MembersListScreen());
       case '/members/create':

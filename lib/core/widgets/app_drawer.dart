@@ -9,9 +9,28 @@ class AppDrawer extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(color: Colors.blue),
-            child: Text('Menu Principal'),
+          DrawerHeader(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            child: const Center(
+              child: Text(
+                'Menu Principal',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.dashboard),
+            title: const Text('Dashboard'),
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/');
+            },
           ),
           ListTile(
             leading: const Icon(Icons.people),
@@ -28,7 +47,7 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.event),
+            leading: const Icon(Icons.groups),
             title: const Text('Evénements organisés'),
             onTap: () {
               Navigator.pushReplacementNamed(context, '/event-organizations');
