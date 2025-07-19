@@ -57,6 +57,7 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
           orderBy: 'lastName ASC',
         );
       }
+      members = members.where((m) => m['isHidden'] == 0).toList();
     }
 
     await loadMembers();
