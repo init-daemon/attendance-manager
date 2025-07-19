@@ -132,6 +132,12 @@ class _EventsListScreenState extends State<EventsListScreen> {
       ),
     );
     if (confirmed == true) {
+      final db = await DbService.getDatabase();
+      await db.delete(
+        'event_organizations',
+        where: 'event_id = ?',
+        whereArgs: [event.id],
+      );
       await DbService.deleteById(tableName: 'events', id: event.id);
       _refreshEvents();
       ScaffoldMessenger.of(context).showSnackBar(

@@ -6,7 +6,7 @@ import 'package:presence_manager/services/app_db_service.dart';
 class MemberTableService {
   static Future<void> createTable(Database db) async {
     await db.execute('''
-      CREATE TABLE members(
+      CREATE TABLE IF NOT EXISTS members(
         id TEXT PRIMARY KEY,
         firstName TEXT,
         lastName TEXT,

@@ -8,13 +8,12 @@ class EventParticipantTableService {
 
   static Future<void> createTable(Database db) async {
     await db.execute('''
-      CREATE TABLE $table (
-        event_organization_id TEXT NOT NULL,
-        individual_id TEXT NOT NULL,
-        is_present INTEGER NOT NULL DEFAULT 0,
-        PRIMARY KEY (event_organization_id, individual_id),
-        FOREIGN KEY(event_organization_id) REFERENCES event_organizations(id) ON DELETE CASCADE,
-        FOREIGN KEY(individual_id) REFERENCES members(id) ON DELETE CASCADE
+      CREATE TABLE IF NOT EXISTS event_participants(
+        id TEXT PRIMARY KEY,
+        event_organization_id TEXT,
+        individual_id TEXT,
+        is_present INTEGER,
+        FOREIGN KEY(event_organization_id) REFERENCES event_organizations(id) ON DELETE CASCADE
       )
     ''');
   }
@@ -82,5 +81,10 @@ class EventParticipantTableService {
       );
       await insert(participant);
     }
+  }
+
+  static Future<void> clear() async {
+    final db = await AppDbService.database;
+    await db.delete('event_participants');
   }
 }

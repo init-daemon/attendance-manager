@@ -10,16 +10,17 @@ class EventOrganizationTableService {
 
   static Future<void> createTable(Database db) async {
     await db.execute('''
-      CREATE TABLE $table (
+      CREATE TABLE IF NOT EXISTS event_organizations(
         id TEXT PRIMARY KEY,
-        event_id TEXT NOT NULL,
+        event_id TEXT,
+        member_id TEXT,
+        date TEXT,
         description TEXT,
-        date TEXT NOT NULL,
-        location TEXT NOT NULL,
-        FOREIGN KEY(event_id) REFERENCES events(id) ON DELETE CASCADE
+        location TEXT,
+        FOREIGN KEY(event_id) REFERENCES events(id) ON DELETE CASCADE,
+        FOREIGN KEY(member_id) REFERENCES members(id) ON DELETE CASCADE
       )
     ''');
-    await EventParticipantTableService.createTable(db);
   }
 
   static Future<void> seed({int count = 10}) async {

@@ -6,10 +6,12 @@ import 'package:presence_manager/services/app_db_service.dart';
 class EventTableService {
   static Future<void> createTable(Database db) async {
     await db.execute('''
-      CREATE TABLE events(
+      CREATE TABLE IF NOT EXISTS events(
         id TEXT PRIMARY KEY,
         name TEXT,
-        createdAt TEXT
+        createdAt TEXT,
+        date TEXT,
+        location TEXT
       )
     ''');
   }
