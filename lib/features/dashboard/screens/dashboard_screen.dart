@@ -23,7 +23,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadCounts() async {
-    final m = await DbService.count('members');
+    final db = await DbService.getDatabase();
+    final mResult = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM members WHERE isHidden = 0',
+    );
+    final m = mResult.first['count'] as int? ?? 0;
     final e = await DbService.count('events');
     final eo = await DbService.count('event_organizations');
     setState(() {
@@ -48,7 +52,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   DashboardCard(
                     count: memberCount,
-                    label: 'Membres',
+                    label: 'Membres visibles',
                     color: Colors.blue,
                     icon: Icons.people,
                   ),
