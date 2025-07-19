@@ -1,10 +1,10 @@
 import 'package:path/path.dart';
 import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:presence_manager/services/member_table_service.dart';
-import 'package:presence_manager/services/event_table_service.dart';
-import 'package:presence_manager/services/event_organization_table_service.dart';
-import 'package:presence_manager/services/event_participant_table_service.dart';
+import 'package:attendance_app/services/member_table_service.dart';
+import 'package:attendance_app/services/event_table_service.dart';
+import 'package:attendance_app/services/event_organization_table_service.dart';
+import 'package:attendance_app/services/event_participant_table_service.dart';
 
 class AppDbService {
   static Database? _db;

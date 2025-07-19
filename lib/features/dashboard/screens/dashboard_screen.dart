@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:presence_manager/core/widgets/app_layout.dart';
-import 'package:presence_manager/features/dashboard/widgets/dashboard_card.dart';
-import 'package:presence_manager/services/db_service.dart';
+import 'package:attendance_app/core/widgets/app_layout.dart';
+import 'package:attendance_app/features/dashboard/widgets/dashboard_card.dart';
+import 'package:attendance_app/services/db_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});

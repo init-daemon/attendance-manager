@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:presence_manager/features/event_organization/widgets/event_organization_form.dart';
-import 'package:presence_manager/services/event_organization_table_service.dart';
-import 'package:presence_manager/features/event_organization/models/event_organization.dart';
-import 'package:presence_manager/features/event/models/event.dart';
-import 'package:presence_manager/services/event_table_service.dart';
-import 'package:presence_manager/features/event/widgets/event_form.dart';
-import 'package:presence_manager/core/widgets/app_layout.dart';
-import 'package:presence_manager/services/db_service.dart';
+import 'package:attendance_app/features/event_organization/widgets/event_organization_form.dart';
+import 'package:attendance_app/services/event_organization_table_service.dart';
+import 'package:attendance_app/features/event_organization/models/event_organization.dart';
+import 'package:attendance_app/features/event/models/event.dart';
+import 'package:attendance_app/services/event_table_service.dart';
+import 'package:attendance_app/features/event/widgets/event_form.dart';
+import 'package:attendance_app/core/widgets/app_layout.dart';
+import 'package:attendance_app/services/db_service.dart';
 
 class EventOrganizationCreateScreen extends StatefulWidget {
   final Event? event;

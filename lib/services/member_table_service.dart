@@ -1,7 +1,7 @@
 import 'package:faker/faker.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:presence_manager/features/member/models/member.dart';
-import 'package:presence_manager/services/app_db_service.dart';
+import 'package:attendance_app/features/member/models/member.dart';
+import 'package:attendance_app/services/app_db_service.dart';
 
 class MemberTableService {
   static Future<void> createTable(Database db) async {

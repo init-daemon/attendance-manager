@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:presence_manager/features/member/widgets/members_table.dart';
-import 'package:presence_manager/services/db_service.dart';
-import 'package:presence_manager/features/member/models/member.dart';
-import 'package:presence_manager/features/member/screens/member_create_screen.dart';
-import 'package:presence_manager/core/widgets/app_layout.dart';
-import 'package:presence_manager/shared/constants/pagination_constants.dart';
+import 'package:attendance_app/features/member/widgets/members_table.dart';
+import 'package:attendance_app/services/db_service.dart';
+import 'package:attendance_app/features/member/models/member.dart';
+import 'package:attendance_app/features/member/screens/member_create_screen.dart';
+import 'package:attendance_app/core/widgets/app_layout.dart';
+import 'package:attendance_app/shared/constants/pagination_constants.dart';
 import 'dart:async';
 
 class MembersListScreen extends StatefulWidget {
