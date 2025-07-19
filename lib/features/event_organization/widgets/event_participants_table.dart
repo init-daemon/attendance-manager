@@ -39,6 +39,12 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
     List<Map<String, dynamic>> members = [];
     String searchText = '';
 
+    final existingParticipants =
+        await EventParticipantTableService.getByEventOrganizationId(
+          widget.eventOrganizationId,
+        );
+    final selectedIds = existingParticipants.map((p) => p.individualId).toSet();
+
     Future<void> loadMembers() async {
       if (searchText.trim().isEmpty) {
         members = await DbService.getPaged(
@@ -47,6 +53,9 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
           offset: currentPage * pageSize,
           orderBy: 'lastName ASC',
         );
+        members = members
+            .where((m) => m['isHidden'] == 0 && !selectedIds.contains(m['id']))
+            .toList();
       } else {
         members = await DbService.search(
           tableName: 'members',
@@ -56,8 +65,10 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
           offset: currentPage * pageSize,
           orderBy: 'lastName ASC',
         );
+        members = members
+            .where((m) => m['isHidden'] == 0 && !selectedIds.contains(m['id']))
+            .toList();
       }
-      members = members.where((m) => m['isHidden'] == 0).toList();
     }
 
     await loadMembers();
