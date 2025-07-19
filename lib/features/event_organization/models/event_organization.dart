@@ -1,5 +1,5 @@
-import 'package:presence_manager/features/event/models/event.dart';
-import 'package:presence_manager/services/event_table_service.dart';
+import 'package:attendance_app/features/event/models/event.dart';
+import 'package:attendance_app/services/event_table_service.dart';
 
 class EventOrganization {
   final String id;

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:presence_manager/features/event_organization/widgets/event_participants_table.dart';
-import 'package:presence_manager/features/event_organization/models/event_organization.dart';
-import 'package:presence_manager/services/event_table_service.dart';
-import 'package:presence_manager/services/date_service.dart';
-import 'package:presence_manager/core/widgets/app_layout.dart';
+import 'package:attendance_app/features/event_organization/widgets/event_participants_table.dart';
+import 'package:attendance_app/features/event_organization/models/event_organization.dart';
+import 'package:attendance_app/services/event_table_service.dart';
+import 'package:attendance_app/services/date_service.dart';
+import 'package:attendance_app/core/widgets/app_layout.dart';
 
 class EventOrganizationParticipantsScreen extends StatelessWidget {
   final String eventOrganizationId;

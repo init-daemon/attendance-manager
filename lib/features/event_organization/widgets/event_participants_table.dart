@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:presence_manager/features/event_organization/models/event_participant.dart';
-import 'package:presence_manager/services/event_participant_table_service.dart';
-import 'package:presence_manager/services/app_db_service.dart';
-import 'package:presence_manager/services/db_service.dart';
+import 'package:attendance_app/features/event_organization/models/event_participant.dart';
+import 'package:attendance_app/services/event_participant_table_service.dart';
+import 'package:attendance_app/services/app_db_service.dart';
+import 'package:attendance_app/services/db_service.dart';
 import 'dart:async';
 
 class EventParticipantsTable extends StatefulWidget {

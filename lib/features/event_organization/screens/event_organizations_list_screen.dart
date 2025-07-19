@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:presence_manager/features/event_organization/widgets/event_organizations_table.dart';
-import 'package:presence_manager/features/event_organization/models/event_organization.dart';
-import 'package:presence_manager/core/widgets/app_layout.dart';
-import 'package:presence_manager/shared/constants/pagination_constants.dart';
-import 'package:presence_manager/services/db_service.dart';
+import 'package:attendance_app/features/event_organization/widgets/event_organizations_table.dart';
+import 'package:attendance_app/features/event_organization/models/event_organization.dart';
+import 'package:attendance_app/core/widgets/app_layout.dart';
+import 'package:attendance_app/shared/constants/pagination_constants.dart';
+import 'package:attendance_app/services/db_service.dart';
 import 'dart:async';
 
 class EventOrganizationsListScreen extends StatefulWidget {

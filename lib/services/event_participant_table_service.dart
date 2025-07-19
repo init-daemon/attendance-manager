@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:sqflite/sqflite.dart';
-import 'package:presence_manager/services/app_db_service.dart';
-import 'package:presence_manager/features/event_organization/models/event_participant.dart';
+import 'package:attendance_app/services/app_db_service.dart';
+import 'package:attendance_app/features/event_organization/models/event_participant.dart';
 
 class EventParticipantTableService {
   static const String table = 'event_participants';

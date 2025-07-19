@@ -1,24 +1,24 @@
 // lib/core/app/app_router.dart
 import 'package:flutter/material.dart';
-import 'package:presence_manager/features/member/screens/members_list_screen.dart';
-import 'package:presence_manager/features/event/screens/events_list_screen.dart';
-import 'package:presence_manager/features/member/screens/member_create_screen.dart';
-import 'package:presence_manager/features/member/screens/member_view_screen.dart';
-import 'package:presence_manager/features/member/screens/member_edit_screen.dart';
-import 'package:presence_manager/features/member/models/member.dart';
-import 'package:presence_manager/features/event/screens/event_create_screen.dart';
-import 'package:presence_manager/features/event/screens/event_view_screen.dart';
-import 'package:presence_manager/features/event/screens/event_edit_screen.dart';
-import 'package:presence_manager/features/event/models/event.dart';
-import 'package:presence_manager/features/event_organization/screens/event_organizations_list_screen.dart';
-import 'package:presence_manager/features/event_organization/screens/event_organization_create_screen.dart';
-import 'package:presence_manager/features/event_organization/screens/event_organization_edit_screen.dart';
-import 'package:presence_manager/features/event_organization/screens/event_organization_view_screen.dart';
-import 'package:presence_manager/features/event_organization/models/event_organization.dart';
-import 'package:presence_manager/features/event_organization/screens/event_organization_participants_screen.dart';
-import 'package:presence_manager/core/widgets/error_page.dart';
-import 'package:presence_manager/core/widgets/app_layout.dart';
-import 'package:presence_manager/features/dashboard/screens/dashboard_screen.dart';
+import 'package:attendance_app/features/member/screens/members_list_screen.dart';
+import 'package:attendance_app/features/event/screens/events_list_screen.dart';
+import 'package:attendance_app/features/member/screens/member_create_screen.dart';
+import 'package:attendance_app/features/member/screens/member_view_screen.dart';
+import 'package:attendance_app/features/member/screens/member_edit_screen.dart';
+import 'package:attendance_app/features/member/models/member.dart';
+import 'package:attendance_app/features/event/screens/event_create_screen.dart';
+import 'package:attendance_app/features/event/screens/event_view_screen.dart';
+import 'package:attendance_app/features/event/screens/event_edit_screen.dart';
+import 'package:attendance_app/features/event/models/event.dart';
+import 'package:attendance_app/features/event_organization/screens/event_organizations_list_screen.dart';
+import 'package:attendance_app/features/event_organization/screens/event_organization_create_screen.dart';
+import 'package:attendance_app/features/event_organization/screens/event_organization_edit_screen.dart';
+import 'package:attendance_app/features/event_organization/screens/event_organization_view_screen.dart';
+import 'package:attendance_app/features/event_organization/models/event_organization.dart';
+import 'package:attendance_app/features/event_organization/screens/event_organization_participants_screen.dart';
+import 'package:attendance_app/core/widgets/error_page.dart';
+import 'package:attendance_app/core/widgets/app_layout.dart';
+import 'package:attendance_app/features/dashboard/screens/dashboard_screen.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:presence_manager/features/event/models/event.dart';
+import 'package:attendance_app/features/event/models/event.dart';
 
 class EventForm extends StatefulWidget {
   final Event? event;

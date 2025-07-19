@@ -15,7 +15,7 @@ class AppDrawer extends StatelessWidget {
             ),
             child: const Center(
               child: Text(
-                'Menu Principal',
+                'Gestion de présence',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,

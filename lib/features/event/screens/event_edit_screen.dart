@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:presence_manager/features/event/widgets/event_form.dart';
-import 'package:presence_manager/features/event/models/event.dart';
-import 'package:presence_manager/services/event_table_service.dart';
+import 'package:attendance_app/features/event/widgets/event_form.dart';
+import 'package:attendance_app/features/event/models/event.dart';
+import 'package:attendance_app/services/event_table_service.dart';
 
 class EventEditScreen extends StatelessWidget {
   final Event event;

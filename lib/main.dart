@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:presence_manager/core/app/app_router.dart';
-import 'package:presence_manager/services/db_service.dart';
-import 'package:presence_manager/core/utils/logger.dart';
+import 'package:attendance_app/core/app/app_router.dart';
+import 'package:attendance_app/services/db_service.dart';
+import 'package:attendance_app/core/utils/logger.dart';
 import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite/sqflite.dart';
@@ -43,7 +43,7 @@ class PresenceManagerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Presence Manager',
+      title: 'Attendance App',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,

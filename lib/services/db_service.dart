@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:presence_manager/services/member_table_service.dart';
-import 'package:presence_manager/services/event_table_service.dart';
-import 'package:presence_manager/services/event_organization_table_service.dart';
-import 'package:presence_manager/services/event_participant_table_service.dart';
+import 'package:attendance_app/services/member_table_service.dart';
+import 'package:attendance_app/services/event_table_service.dart';
+import 'package:attendance_app/services/event_organization_table_service.dart';
+import 'package:attendance_app/services/event_participant_table_service.dart';
 
 class DbService {
   static Future<void> initialize({bool fresh = false}) async {

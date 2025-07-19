@@ -1,9 +1,9 @@
 import 'package:faker/faker.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:presence_manager/features/event_organization/models/event_organization.dart';
-import 'package:presence_manager/services/app_db_service.dart';
-import 'package:presence_manager/services/db_service.dart';
-import 'package:presence_manager/services/event_participant_table_service.dart';
+import 'package:attendance_app/features/event_organization/models/event_organization.dart';
+import 'package:attendance_app/services/app_db_service.dart';
+import 'package:attendance_app/services/db_service.dart';
+import 'package:attendance_app/services/event_participant_table_service.dart';
 
 class EventOrganizationTableService {
   static const String table = 'event_organizations';
