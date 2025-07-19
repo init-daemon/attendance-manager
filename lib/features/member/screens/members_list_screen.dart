@@ -21,6 +21,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
   late Future<List<Member>> _membersFuture;
   String _searchText = '';
   Timer? _debounce;
+  String _hiddenFilter = 'visible';
 
   @override
   void initState() {
@@ -29,14 +30,33 @@ class _MembersListScreenState extends State<MembersListScreen> {
   }
 
   void _loadMembers() {
+    String? where;
+    List<dynamic>? whereArgs;
+
+    if (_hiddenFilter == 'visible') {
+      where = 'isHidden = ?';
+      whereArgs = [0];
+    } else if (_hiddenFilter == 'hidden') {
+      where = 'isHidden = ?';
+      whereArgs = [1];
+    }
+    Future<List<Map<String, dynamic>>> future;
     if (_searchText.isEmpty) {
+      future = DbService.getPaged(
+        tableName: 'members',
+        limit: _pageSize,
+        offset: _currentPage * _pageSize,
+        orderBy: 'lastName ASC',
+      );
+      if (where != null) {
+        future = future.then(
+          (list) => list.where((m) => m['isHidden'] == whereArgs![0]).toList(),
+        );
+      }
       setState(() {
-        _membersFuture = DbService.getPaged(
-          tableName: 'members',
-          limit: _pageSize,
-          offset: _currentPage * _pageSize,
-          orderBy: 'lastName ASC',
-        ).then((maps) => maps.map((map) => Member.fromMap(map)).toList());
+        _membersFuture = future.then(
+          (maps) => maps.map((map) => Member.fromMap(map)).toList(),
+        );
         DbService.count('members').then((count) {
           setState(() {
             _totalMembers = count;
@@ -44,15 +64,23 @@ class _MembersListScreenState extends State<MembersListScreen> {
         });
       });
     } else {
+      future = DbService.search(
+        tableName: 'members',
+        query: _searchText,
+        fields: ['firstName', 'lastName'],
+        limit: _pageSize,
+        offset: _currentPage * _pageSize,
+        orderBy: 'lastName ASC',
+      );
+      if (where != null) {
+        future = future.then(
+          (list) => list.where((m) => m['isHidden'] == whereArgs![0]).toList(),
+        );
+      }
       setState(() {
-        _membersFuture = DbService.search(
-          tableName: 'members',
-          query: _searchText,
-          fields: ['firstName', 'lastName'],
-          limit: _pageSize,
-          offset: _currentPage * _pageSize,
-          orderBy: 'lastName ASC',
-        ).then((maps) => maps.map((map) => Member.fromMap(map)).toList());
+        _membersFuture = future.then(
+          (maps) => maps.map((map) => Member.fromMap(map)).toList(),
+        );
         DbService.search(
           tableName: 'members',
           query: _searchText,
@@ -122,12 +150,39 @@ class _MembersListScreenState extends State<MembersListScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: TextField(
-              decoration: const InputDecoration(
-                labelText: 'Recherche (nom ou prénom)',
-                prefixIcon: Icon(Icons.search),
-              ),
-              onChanged: _onSearchChanged,
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      labelText: 'Recherche (nom ou prénom)',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: _onSearchChanged,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                DropdownButton<String>(
+                  value: _hiddenFilter,
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'visible',
+                      child: Text('Non cachés'),
+                    ),
+                    DropdownMenuItem(value: 'all', child: Text('Tous')),
+                    DropdownMenuItem(value: 'hidden', child: Text('Cachés')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _hiddenFilter = value;
+                        _currentPage = 0;
+                      });
+                      _loadMembers();
+                    }
+                  },
+                ),
+              ],
             ),
           ),
           Padding(
