@@ -133,6 +133,52 @@ class _EventOrganizationsListScreenState
     });
   }
 
+  Future<void> _deleteOrganization(
+    BuildContext context,
+    EventOrganization org,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirmer la suppression'),
+        content: const Text(
+          "Supprimer cette organisation d'événement entraînera également la suppression des participants associés. Voulez-vous vraiment continuer ?",
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Annuler'),
+            onPressed: () => Navigator.of(ctx).pop(false),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.delete),
+            label: const Text('Supprimer'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      final db = await DbService.getDatabase();
+      await db.delete(
+        'event_organizations',
+        where: 'id = ?',
+        whereArgs: [org.id],
+      );
+      _refresh();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Organisation supprimée avec succès'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   int get totalPages => (_totalOrgs / _pageSize).ceil();
 
   @override
@@ -226,6 +272,8 @@ class _EventOrganizationsListScreenState
                     onManageParticipants: (org) =>
                         _navigateToParticipants(context, org),
                     onEditOrganization: (org) => _navigateToEdit(context, org),
+                    onDeleteOrganization: (org) =>
+                        _deleteOrganization(context, org),
                   );
                 }
               },

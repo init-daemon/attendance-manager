@@ -8,13 +8,12 @@ class EventParticipantTableService {
 
   static Future<void> createTable(Database db) async {
     await db.execute('''
-      CREATE TABLE $table (
-        event_organization_id TEXT NOT NULL,
-        individual_id TEXT NOT NULL,
-        is_present INTEGER NOT NULL DEFAULT 0,
-        PRIMARY KEY (event_organization_id, individual_id),
-        FOREIGN KEY(event_organization_id) REFERENCES event_organizations(id) ON DELETE CASCADE,
-        FOREIGN KEY(individual_id) REFERENCES members(id) ON DELETE CASCADE
+      CREATE TABLE IF NOT EXISTS event_participants(
+        id TEXT PRIMARY KEY,
+        event_organization_id TEXT,
+        individual_id TEXT,
+        is_present INTEGER,
+        FOREIGN KEY(event_organization_id) REFERENCES event_organizations(id) ON DELETE CASCADE
       )
     ''');
   }
@@ -23,7 +22,7 @@ class EventParticipantTableService {
     final db = await AppDbService.database;
     return await db.insert(
       table,
-      participant.toMap(),
+      participant.toMap()..remove('isHidden'),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
@@ -32,12 +31,16 @@ class EventParticipantTableService {
     String eventOrganizationId,
   ) async {
     final db = await AppDbService.database;
-    final maps = await db.query(
-      table,
-      where: 'event_organization_id = ?',
-      whereArgs: [eventOrganizationId],
+    final result = await db.rawQuery(
+      '''
+      SELECT ep.*, m.isHidden
+      FROM event_participants ep
+      JOIN members m ON ep.individual_id = m.id
+      WHERE ep.event_organization_id = ?
+    ''',
+      [eventOrganizationId],
     );
-    return maps.map((m) => EventParticipant.fromMap(m)).toList();
+    return result.map((map) => EventParticipant.fromMap(map)).toList();
   }
 
   static Future<int> update(EventParticipant participant) async {
@@ -82,5 +85,10 @@ class EventParticipantTableService {
       );
       await insert(participant);
     }
+  }
+
+  static Future<void> clear() async {
+    final db = await AppDbService.database;
+    await db.delete('event_participants');
   }
 }

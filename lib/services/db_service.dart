@@ -4,6 +4,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:presence_manager/services/member_table_service.dart';
 import 'package:presence_manager/services/event_table_service.dart';
 import 'package:presence_manager/services/event_organization_table_service.dart';
+import 'package:presence_manager/services/event_participant_table_service.dart';
 
 class DbService {
   static Future<void> initialize({bool fresh = false}) async {
@@ -43,6 +44,7 @@ class DbService {
     await MemberTableService.createTable(db);
     await EventTableService.createTable(db);
     await EventOrganizationTableService.createTable(db);
+    await EventParticipantTableService.createTable(db);
   }
 
   static Future<dynamic> getRandomRow({
@@ -94,10 +96,28 @@ class DbService {
     }
   }
 
+  static Future<Database> getDatabase() async {
+    return await _getDatabase();
+  }
+
   static Future<Database> _getDatabase() async {
     return await openDatabase(
       join(await getDatabasesPath(), 'app.db'),
       version: 1,
+      onCreate: (db, version) async {
+        await db.execute('PRAGMA foreign_keys = ON;');
+        await MemberTableService.createTable(db);
+        await EventTableService.createTable(db);
+        await EventOrganizationTableService.createTable(db);
+        await EventParticipantTableService.createTable(db);
+      },
+      onOpen: (db) async {
+        await db.execute('PRAGMA foreign_keys = ON;');
+        await MemberTableService.createTable(db);
+        await EventTableService.createTable(db);
+        await EventOrganizationTableService.createTable(db);
+        await EventParticipantTableService.createTable(db);
+      },
     );
   }
 
@@ -154,5 +174,13 @@ class DbService {
   }) async {
     final db = await _getDatabase();
     return await db.query(tableName, where: '$field = ?', whereArgs: [value]);
+  }
+
+  static Future<void> deleteById({
+    required String tableName,
+    required dynamic id,
+  }) async {
+    final db = await _getDatabase();
+    await db.delete(tableName, where: 'id = ?', whereArgs: [id]);
   }
 }

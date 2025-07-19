@@ -39,6 +39,12 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
     List<Map<String, dynamic>> members = [];
     String searchText = '';
 
+    final existingParticipants =
+        await EventParticipantTableService.getByEventOrganizationId(
+          widget.eventOrganizationId,
+        );
+    final selectedIds = existingParticipants.map((p) => p.individualId).toSet();
+
     Future<void> loadMembers() async {
       if (searchText.trim().isEmpty) {
         members = await DbService.getPaged(
@@ -47,6 +53,9 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
           offset: currentPage * pageSize,
           orderBy: 'lastName ASC',
         );
+        members = members
+            .where((m) => m['isHidden'] == 0 && !selectedIds.contains(m['id']))
+            .toList();
       } else {
         members = await DbService.search(
           tableName: 'members',
@@ -56,6 +65,9 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
           offset: currentPage * pageSize,
           orderBy: 'lastName ASC',
         );
+        members = members
+            .where((m) => m['isHidden'] == 0 && !selectedIds.contains(m['id']))
+            .toList();
       }
     }
 
@@ -253,7 +265,10 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
                 return const Center(child: LinearProgressIndicator());
               }
               final participants = snapshot.data!;
-              if (participants.isEmpty) {
+              final visibleParticipants = participants
+                  .where((p) => p.isHidden == false)
+                  .toList();
+              if (visibleParticipants.isEmpty) {
                 return const Center(child: Text('Aucun participant'));
               }
               return Padding(
@@ -271,7 +286,7 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
                         DataColumn(label: Text('Présent')),
                         DataColumn(label: Text('Actions')),
                       ],
-                      rows: participants.map((p) {
+                      rows: visibleParticipants.map((p) {
                         return DataRow(
                           cells: [
                             DataCell(

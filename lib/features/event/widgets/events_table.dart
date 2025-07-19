@@ -5,8 +5,14 @@ import 'package:presence_manager/features/event/screens/event_view_screen.dart';
 class EventsTable extends StatelessWidget {
   final List<Event> events;
   final VoidCallback? onEdit;
+  final void Function(Event)? onDelete;
 
-  const EventsTable({super.key, required this.events, this.onEdit});
+  const EventsTable({
+    Key? key,
+    required this.events,
+    this.onEdit,
+    this.onDelete,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +22,7 @@ class EventsTable extends StatelessWidget {
         scrollDirection: Axis.vertical,
         child: DataTable(
           columns: const [
-            DataColumn(label: Text('Actions')), // déplacé à gauche
+            DataColumn(label: Text('Actions')),
             DataColumn(label: Text('Nom')),
             DataColumn(label: Text('Date de création')),
           ],
@@ -40,16 +46,15 @@ class EventsTable extends StatelessWidget {
                       ),
                       IconButton(
                         icon: const Icon(Icons.edit),
-                        onPressed: () async {
-                          final result = await Navigator.pushNamed(
-                            context,
-                            '/events/edit',
-                            arguments: event,
-                          );
-                          if (result != null && result is Event) {
-                            if (onEdit != null) onEdit!();
-                          }
-                        },
+                        onPressed: onEdit,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        color: Theme.of(context).colorScheme.error,
+                        tooltip: 'Supprimer',
+                        onPressed: onDelete != null
+                            ? () => onDelete!(event)
+                            : null,
                       ),
                     ],
                   ),

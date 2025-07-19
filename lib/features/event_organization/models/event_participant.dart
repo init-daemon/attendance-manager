@@ -2,11 +2,13 @@ class EventParticipant {
   final String eventOrganizationId;
   final String individualId;
   bool isPresent;
+  bool isHidden;
 
   EventParticipant({
     required this.eventOrganizationId,
     required this.individualId,
     this.isPresent = false,
+    this.isHidden = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -22,6 +24,7 @@ class EventParticipant {
       eventOrganizationId: map['event_organization_id'],
       individualId: map['individual_id'],
       isPresent: map['is_present'] == 1,
+      isHidden: map['isHidden'] == 1,
     );
   }
 }

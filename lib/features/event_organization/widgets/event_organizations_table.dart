@@ -9,6 +9,7 @@ class EventOrganizationsTable extends StatelessWidget {
   final VoidCallback? onEdit;
   final Function(EventOrganization)? onManageParticipants;
   final Function(EventOrganization)? onEditOrganization;
+  final Function(EventOrganization)? onDeleteOrganization;
 
   const EventOrganizationsTable({
     super.key,
@@ -16,6 +17,7 @@ class EventOrganizationsTable extends StatelessWidget {
     this.onEdit,
     this.onManageParticipants,
     this.onEditOrganization,
+    this.onDeleteOrganization,
   });
 
   @override
@@ -68,6 +70,15 @@ class EventOrganizationsTable extends StatelessWidget {
                         onPressed: () {
                           if (onManageParticipants != null) {
                             onManageParticipants!(org);
+                          }
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        color: Theme.of(context).colorScheme.error,
+                        onPressed: () {
+                          if (onDeleteOrganization != null) {
+                            onDeleteOrganization!(org);
                           }
                         },
                       ),

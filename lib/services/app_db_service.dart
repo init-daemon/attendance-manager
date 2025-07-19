@@ -4,6 +4,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:presence_manager/services/member_table_service.dart';
 import 'package:presence_manager/services/event_table_service.dart';
 import 'package:presence_manager/services/event_organization_table_service.dart';
+import 'package:presence_manager/services/event_participant_table_service.dart';
 
 class AppDbService {
   static Database? _db;
@@ -25,9 +26,14 @@ class AppDbService {
       path,
       version: 1,
       onCreate: (db, version) async {
+        await db.execute('PRAGMA foreign_keys = ON;');
         await MemberTableService.createTable(db);
         await EventTableService.createTable(db);
         await EventOrganizationTableService.createTable(db);
+        await EventParticipantTableService.createTable(db);
+      },
+      onOpen: (db) async {
+        await db.execute('PRAGMA foreign_keys = ON;');
       },
     );
   }
