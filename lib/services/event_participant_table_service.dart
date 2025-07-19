@@ -22,7 +22,7 @@ class EventParticipantTableService {
     final db = await AppDbService.database;
     return await db.insert(
       table,
-      participant.toMap(),
+      participant.toMap()..remove('isHidden'),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
@@ -31,12 +31,16 @@ class EventParticipantTableService {
     String eventOrganizationId,
   ) async {
     final db = await AppDbService.database;
-    final maps = await db.query(
-      table,
-      where: 'event_organization_id = ?',
-      whereArgs: [eventOrganizationId],
+    final result = await db.rawQuery(
+      '''
+      SELECT ep.*, m.isHidden
+      FROM event_participants ep
+      JOIN members m ON ep.individual_id = m.id
+      WHERE ep.event_organization_id = ?
+    ''',
+      [eventOrganizationId],
     );
-    return maps.map((m) => EventParticipant.fromMap(m)).toList();
+    return result.map((map) => EventParticipant.fromMap(map)).toList();
   }
 
   static Future<int> update(EventParticipant participant) async {

@@ -253,7 +253,10 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
                 return const Center(child: LinearProgressIndicator());
               }
               final participants = snapshot.data!;
-              if (participants.isEmpty) {
+              final visibleParticipants = participants
+                  .where((p) => p.isHidden == false)
+                  .toList();
+              if (visibleParticipants.isEmpty) {
                 return const Center(child: Text('Aucun participant'));
               }
               return Padding(
@@ -271,7 +274,7 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
                         DataColumn(label: Text('Présent')),
                         DataColumn(label: Text('Actions')),
                       ],
-                      rows: participants.map((p) {
+                      rows: visibleParticipants.map((p) {
                         return DataRow(
                           cells: [
                             DataCell(
