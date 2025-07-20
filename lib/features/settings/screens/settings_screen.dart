@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:attendance_app/core/widgets/app_layout.dart';
 import 'package:attendance_app/services/db_service.dart';
 import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -22,7 +23,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _backupStatus = null;
     });
 
-    await Permission.storage.request();
+    final status = await Permission.storage.request();
+    if (!status.isGranted) {
+      setState(() {
+        _isBackingUp = false;
+        _backupStatus = "Permission d'accès au stockage refusée.";
+      });
+      return;
+    }
 
     try {
       String? directoryPath = await FilePicker.platform.getDirectoryPath(
@@ -30,10 +38,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
 
       if (directoryPath == null) {
-        setState(() {
-          _isBackingUp = false;
-          _backupStatus = "Sauvegarde annulée.";
-        });
+        final downloadsDir = await getExternalStorageDirectory();
+        if (downloadsDir != null) {
+          final dbPath = await DbService.getDatabasePath();
+          final dbFile = File(dbPath);
+          final backupFile = File('${downloadsDir.path}/attendance_backup.db');
+          await dbFile.copy(backupFile.path);
+          setState(() {
+            _isBackingUp = false;
+            _backupStatus =
+                "Aucun dossier choisi. Sauvegarde effectuée dans : ${backupFile.path}";
+          });
+        } else {
+          setState(() {
+            _isBackingUp = false;
+            _backupStatus =
+                "Sauvegarde annulée. Impossible de choisir un dossier et accès au dossier de téléchargement refusé.";
+          });
+        }
         return;
       }
 
