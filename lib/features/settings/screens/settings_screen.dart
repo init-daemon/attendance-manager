@@ -5,6 +5,11 @@ import 'package:attendance_app/core/widgets/app_layout.dart';
 import 'package:attendance_app/services/db_service.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:attendance_app/services/member_table_service.dart';
+import 'package:attendance_app/services/event_table_service.dart';
+import 'package:attendance_app/services/event_organization_table_service.dart';
+import 'package:attendance_app/services/event_participant_table_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -16,6 +21,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _isBackingUp = false;
   String? _backupStatus;
+  bool _isImporting = false;
 
   Future<void> _backupDatabase() async {
     setState(() {
@@ -85,6 +91,90 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _importDatabase() async {
+    setState(() {
+      _isImporting = true;
+      _backupStatus = null;
+    });
+
+    //demande la permission d'accès au stockage (Android 11+ nécessite manageExternalStorage)
+    PermissionStatus status = await Permission.storage.request();
+    if (!status.isGranted) {
+      // Android 11+ (API 30+)
+      if (await Permission.manageExternalStorage.isDenied ||
+          await Permission.manageExternalStorage.isPermanentlyDenied) {
+        await Permission.manageExternalStorage.request();
+      }
+      status = await Permission.manageExternalStorage.status;
+    }
+
+    if (!status.isGranted) {
+      setState(() {
+        _isImporting = false;
+        _backupStatus =
+            "Permission d'accès au stockage refusée. Veuillez autoriser l'accès dans les paramètres de l'application.";
+      });
+      return;
+    }
+
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        dialogTitle: "Sélectionnez la base de données à importer",
+        type: FileType.any,
+      );
+
+      if (result == null || result.files.single.path == null) {
+        setState(() {
+          _isImporting = false;
+          _backupStatus = "Import annulé.";
+        });
+        return;
+      }
+
+      String importPath = result.files.single.path!;
+
+      Database importedDb = await openDatabase(importPath, readOnly: true);
+
+      bool membersOk = await MemberTableService.checkSchema(importedDb);
+      bool eventsOk = await EventTableService.checkSchema(importedDb);
+      bool orgsOk = await EventOrganizationTableService.checkSchema(importedDb);
+      bool participantsOk = await EventParticipantTableService.checkSchema(
+        importedDb,
+      );
+
+      await importedDb.close();
+
+      if (!membersOk || !eventsOk || !orgsOk || !participantsOk) {
+        setState(() {
+          _isImporting = false;
+          _backupStatus =
+              "Erreur : le schéma de la base de données importée ne correspond pas à celui attendu.";
+        });
+        return;
+      }
+
+      final appDbPath = await DbService.getDatabasePath();
+      final appDbFile = File(appDbPath);
+
+      try {
+        await deleteDatabase(appDbPath);
+      } catch (_) {}
+
+      await File(importPath).copy(appDbPath);
+
+      setState(() {
+        _isImporting = false;
+        _backupStatus =
+            "Importation réussie ! La base de données a été remplacée.";
+      });
+    } catch (e) {
+      setState(() {
+        _isImporting = false;
+        _backupStatus = "Erreur lors de l'import : $e";
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppLayout(
@@ -111,12 +201,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   : const Text("Sauvegarder maintenant"),
               onPressed: _isBackingUp ? null : _backupDatabase,
             ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.file_upload),
+              label: _isImporting
+                  ? const Text("Importation en cours...")
+                  : const Text("Importer une base de données"),
+              onPressed: _isImporting ? null : _importDatabase,
+            ),
             if (_backupStatus != null) ...[
               const SizedBox(height: 16),
               Text(
                 _backupStatus!,
                 style: TextStyle(
-                  color: _backupStatus!.contains("réussie")
+                  color:
+                      _backupStatus!.contains("réussie") ||
+                          _backupStatus!.contains("Importation réussie")
                       ? Colors.green
                       : Colors.red,
                 ),
