@@ -53,6 +53,13 @@ class AppDrawer extends StatelessWidget {
               Navigator.pushReplacementNamed(context, '/event-organizations');
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: const Text('Paramètres'),
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/settings');
+            },
+          ),
         ],
       ),
     );

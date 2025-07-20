@@ -183,4 +183,8 @@ class DbService {
     final db = await _getDatabase();
     await db.delete(tableName, where: 'id = ?', whereArgs: [id]);
   }
+
+  static Future<String> getDatabasePath() async {
+    return join(await getDatabasesPath(), 'app.db');
+  }
 }
