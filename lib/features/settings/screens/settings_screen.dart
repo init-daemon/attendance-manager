@@ -5,11 +5,13 @@ import 'package:attendance_app/core/widgets/app_layout.dart';
 import 'package:attendance_app/services/db_service.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 import 'package:attendance_app/services/member_table_service.dart';
 import 'package:attendance_app/services/event_table_service.dart';
 import 'package:attendance_app/services/event_organization_table_service.dart';
 import 'package:attendance_app/services/event_participant_table_service.dart';
+import 'dart:developer' as developer;
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -91,6 +93,60 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<String> _autoBackupBeforeImport() async {
+    try {
+      final dbPath = await DbService.getDatabasePath();
+      final dbFile = File(dbPath);
+
+      if (!await dbFile.exists()) {
+        return "";
+      }
+
+      Directory backupDir;
+      if (Platform.isAndroid) {
+        backupDir = Directory(
+          '/storage/emulated/0/Documents/attendance_app_backup',
+        );
+      } else {
+        final docsDir = await getApplicationDocumentsDirectory();
+        backupDir = Directory(p.join(docsDir.path, "attendance_app_backup"));
+      }
+
+      if (!await backupDir.exists()) {
+        await backupDir.create(recursive: true);
+      }
+
+      final existing = backupDir
+          .listSync()
+          .whereType<File>()
+          .where(
+            (f) =>
+                p.basename(f.path).startsWith("attendance_backup_") &&
+                p.extension(f.path) == ".db",
+          )
+          .toList();
+      int maxNum = 0;
+      for (final f in existing) {
+        final match = RegExp(
+          r'attendance_backup_(\d+)\.db',
+        ).firstMatch(p.basename(f.path));
+        if (match != null) {
+          final num = int.tryParse(match.group(1) ?? "0") ?? 0;
+          if (num > maxNum) maxNum = num;
+        }
+      }
+      final nextNum = maxNum + 1;
+      final backupPath = p.join(
+        backupDir.path,
+        "attendance_backup_$nextNum.db",
+      );
+      await dbFile.copy(backupPath);
+      return backupPath;
+    } catch (e) {
+      return "";
+    }
+  }
+
   Future<void> _importDatabase() async {
     setState(() {
       _isImporting = true;
@@ -133,6 +189,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       String importPath = result.files.single.path!;
 
+      String backupPath = await _autoBackupBeforeImport();
+      if (backupPath.isNotEmpty) {
+        setState(() {
+          _backupStatus = "Sauvegarde automatique effectuée : $backupPath";
+        });
+      }
+
       Database importedDb = await openDatabase(importPath, readOnly: true);
 
       bool membersOk = await MemberTableService.checkSchema(importedDb);
@@ -158,7 +221,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       try {
         await deleteDatabase(appDbPath);
-      } catch (_) {}
+      } catch (e) {
+        developer.log('Erreur lors de la suppression de l\'ancienne base : $e');
+      }
 
       await File(importPath).copy(appDbPath);
 
