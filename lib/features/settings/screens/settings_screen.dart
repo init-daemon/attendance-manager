@@ -12,6 +12,7 @@ import 'package:attendance_app/services/event_table_service.dart';
 import 'package:attendance_app/services/event_organization_table_service.dart';
 import 'package:attendance_app/services/event_participant_table_service.dart';
 import 'dart:developer' as developer;
+import 'package:attendance_app/services/google_drive_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -24,6 +25,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isBackingUp = false;
   String? _backupStatus;
   bool _isImporting = false;
+  bool _isBackingUpToGoogleDrive = false;
+
+  Future<void> _backupToGoogleDrive() async {
+    setState(() {
+      _isBackingUpToGoogleDrive = true;
+      _backupStatus = null;
+    });
+
+    try {
+      final dbPath = await DbService.getDatabasePath();
+      final String? drivePath = await GoogleDriveService.backupFileToDrive(
+        dbPath,
+      );
+
+      if (drivePath != null) {
+        setState(() {
+          _isBackingUpToGoogleDrive = false;
+          _backupStatus = "Sauvegarde sur Google Drive réussie: $drivePath";
+        });
+      } else {
+        setState(() {
+          _isBackingUpToGoogleDrive = false;
+          _backupStatus = "Échec de la sauvegarde sur Google Drive";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isBackingUpToGoogleDrive = false;
+        _backupStatus = "Erreur lors de la sauvegarde sur Google Drive: $e";
+      });
+    }
+  }
 
   Future<void> _backupDatabase() async {
     setState(() {
@@ -131,8 +164,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           r'attendance_backup_(\d+)\.db',
         ).firstMatch(p.basename(f.path));
         if (match != null) {
-          final num = int.tryParse(match.group(1) ?? "0") ?? 0;
-          if (num > maxNum) maxNum = num;
+          final num = int.tryParse(match.group(1) ?? "0");
+          if (num != null && num > maxNum) maxNum = num;
         }
       }
       final nextNum = maxNum + 1;
@@ -263,10 +296,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
               icon: const Icon(Icons.backup),
               label: _isBackingUp
                   ? const Text("Sauvegarde en cours...")
-                  : const Text("Sauvegarder maintenant"),
+                  : const Text("Sauvegarder localement"),
               onPressed: _isBackingUp ? null : _backupDatabase,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.cloud_upload),
+              label: _isBackingUpToGoogleDrive
+                  ? const Text("Sauvegarde sur Google Drive en cours...")
+                  : const Text("Sauvegarder sur Google Drive"),
+              onPressed: _isBackingUpToGoogleDrive
+                  ? null
+                  : _backupToGoogleDrive,
+            ),
+            const SizedBox(height: 16),
             ElevatedButton.icon(
               icon: const Icon(Icons.file_upload),
               label: _isImporting
@@ -281,7 +324,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 style: TextStyle(
                   color:
                       _backupStatus!.contains("réussie") ||
-                          _backupStatus!.contains("Importation réussie")
+                          _backupStatus!.contains("Importation réussie") ||
+                          _backupStatus!.contains("Google Drive réussie")
                       ? Colors.green
                       : Colors.red,
                 ),
