@@ -26,6 +26,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String? _backupStatus;
   bool _isImporting = false;
   bool _isBackingUpToGoogleDrive = false;
+  bool _isRestoringFromGoogleDrive = false;
 
   Future<void> _backupToGoogleDrive() async {
     setState(() {
@@ -54,6 +55,73 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() {
         _isBackingUpToGoogleDrive = false;
         _backupStatus = "Erreur lors de la sauvegarde sur Google Drive: $e";
+      });
+    }
+  }
+
+  Future<void> _restoreFromGoogleDrive() async {
+    setState(() {
+      _isRestoringFromGoogleDrive = true;
+      _backupStatus = null;
+    });
+
+    try {
+      final String? backupPath = await GoogleDriveService.restoreFromDrive(
+        context,
+      );
+
+      if (backupPath != null) {
+        String autoBackupPath = await _autoBackupBeforeImport();
+        if (autoBackupPath.isNotEmpty) {
+          _backupStatus = "Sauvegarde automatique effectuée : $autoBackupPath";
+        }
+
+        Database importedDb = await openDatabase(backupPath, readOnly: true);
+        bool membersOk = await MemberTableService.checkSchema(importedDb);
+        bool eventsOk = await EventTableService.checkSchema(importedDb);
+        bool orgsOk = await EventOrganizationTableService.checkSchema(
+          importedDb,
+        );
+        bool participantsOk = await EventParticipantTableService.checkSchema(
+          importedDb,
+        );
+        await importedDb.close();
+
+        if (!membersOk || !eventsOk || !orgsOk || !participantsOk) {
+          setState(() {
+            _isRestoringFromGoogleDrive = false;
+            _backupStatus =
+                "Erreur : le schéma de la base de données importée ne correspond pas à celui attendu.";
+          });
+          return;
+        }
+
+        final appDbPath = await DbService.getDatabasePath();
+        try {
+          await deleteDatabase(appDbPath);
+        } catch (e) {
+          developer.log(
+            'Erreur lors de la suppression de l\'ancienne base : $e',
+          );
+        }
+        await File(backupPath).copy(appDbPath);
+
+        setState(() {
+          _isRestoringFromGoogleDrive = false;
+          _backupStatus = "Restauration depuis Google Drive réussie !";
+        });
+      } else {
+        setState(() {
+          _isRestoringFromGoogleDrive = false;
+          _backupStatus =
+              "Aucun fichier sélectionné ou erreur lors de la restauration";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isRestoringFromGoogleDrive = false;
+        _backupStatus =
+            "Erreur lors de la restauration depuis Google Drive: $e";
       });
     }
   }
@@ -308,6 +376,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onPressed: _isBackingUpToGoogleDrive
                   ? null
                   : _backupToGoogleDrive,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.cloud_download),
+              label: _isRestoringFromGoogleDrive
+                  ? const Text("Restauration depuis Google Drive en cours...")
+                  : const Text("Restaurer depuis Google Drive"),
+              onPressed: _isRestoringFromGoogleDrive
+                  ? null
+                  : _restoreFromGoogleDrive,
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(

@@ -4,6 +4,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 
 class GoogleDriveService {
   static const String _backupFolderName = 'AttendanceAppBackups';
@@ -50,9 +52,95 @@ class GoogleDriveService {
       return '${uploadedFile.name} (ID: ${uploadedFile.id})';
     } catch (e) {
       debugPrint('Erreur Google Drive: $e');
-
       return null;
     }
+  }
+
+  static Future<String?> restoreFromDrive(BuildContext context) async {
+    try {
+      if (_driveApi == null) {
+        await _initializeDriveApi();
+        if (_driveApi == null) {
+          debugPrint('Erreur: Impossible d\'initialiser Google Drive API');
+          return null;
+        }
+      }
+
+      final String folderId = await _getOrCreateBackupFolder();
+
+      final files = await _driveApi!.files.list(
+        q: "'$folderId' in parents and mimeType != 'application/vnd.google-apps.folder' and trashed = false",
+        orderBy: 'createdTime desc',
+      );
+
+      if (files.files == null || files.files!.isEmpty) {
+        debugPrint('Aucun fichier de sauvegarde trouvé');
+        return null;
+      }
+
+      final recentFiles = files.files!.take(5).toList();
+
+      final selectedFile = await showDialog<drive.File>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Choisir une sauvegarde'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: recentFiles.length,
+                itemBuilder: (context, index) {
+                  final file = recentFiles[index];
+                  return ListTile(
+                    title: Text(file.name ?? 'Sauvegarde ${index + 1}'),
+                    onTap: () => Navigator.pop(context, file),
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                child: const Text('Annuler'),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (selectedFile == null) return null;
+
+      final tempDir = await getTemporaryDirectory();
+      final tempPath = p.join(tempDir.path, selectedFile.name!);
+      final file = File(tempPath);
+      final sink = file.openWrite();
+
+      final media =
+          await _driveApi!.files.get(
+                selectedFile.id!,
+                downloadOptions: drive.DownloadOptions.fullMedia,
+              )
+              as drive.Media;
+
+      await media.stream.pipe(sink);
+      await sink.close();
+
+      debugPrint('Fichier téléchargé avec succès: $tempPath');
+      return tempPath;
+    } catch (e) {
+      debugPrint('Erreur lors de la restauration depuis Google Drive: $e');
+      return null;
+    }
+  }
+
+  static Future<drive.File?> _selectFileToRestore(
+    List<drive.File> files,
+  ) async {
+    if (files.isNotEmpty) {
+      return files.first;
+    }
+    return null;
   }
 
   static Future<void> _initializeDriveApi() async {
@@ -63,7 +151,6 @@ class GoogleDriveService {
 
       if (account == null) {
         debugPrint('Annulation par l\'utilisateur');
-
         return;
       }
 
@@ -117,7 +204,6 @@ class AuthClient extends http.BaseClient {
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) {
     request.headers['Authorization'] = 'Bearer $_token';
-
     return _client.send(request);
   }
 }
