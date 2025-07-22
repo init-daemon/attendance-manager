@@ -28,11 +28,81 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isBackingUpToGoogleDrive = false;
   bool _isRestoringFromGoogleDrive = false;
 
+  Future<void> _backupDatabase() async {
+    setState(() {
+      _isBackingUp = true;
+      _backupStatus = null;
+    });
+
+    final status = await Permission.storage.request();
+    if (!status.isGranted) {
+      setState(() {
+        _isBackingUp = false;
+        _backupStatus = "Permission d'accès au stockage refusée.";
+      });
+      return;
+    }
+
+    try {
+      final String? directoryPath = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: "Choisissez le dossier de sauvegarde",
+      );
+
+      final dbPath = await DbService.getDatabasePath();
+      final dbFile = File(dbPath);
+
+      if (!await dbFile.exists()) {
+        setState(() {
+          _isBackingUp = false;
+          _backupStatus = "Fichier de base de données introuvable.";
+        });
+        return;
+      }
+
+      String backupPath;
+      if (directoryPath == null) {
+        final downloadsDir = await getExternalStorageDirectory();
+        if (downloadsDir == null) {
+          setState(() {
+            _isBackingUp = false;
+            _backupStatus =
+                "Impossible d'accéder au dossier de téléchargement.";
+          });
+          return;
+        }
+        backupPath = '${downloadsDir.path}/attendance_backup.db';
+      } else {
+        backupPath = '$directoryPath/attendance_backup.db';
+      }
+
+      await dbFile.copy(backupPath);
+      setState(() {
+        _isBackingUp = false;
+        _backupStatus = "Sauvegarde réussie à : $backupPath";
+      });
+    } catch (e) {
+      setState(() {
+        _isBackingUp = false;
+        _backupStatus = "Erreur lors de la sauvegarde : $e";
+      });
+    }
+  }
+
   Future<void> _backupToGoogleDrive() async {
     setState(() {
       _isBackingUpToGoogleDrive = true;
       _backupStatus = null;
     });
+
+    bool isConnected = await _checkInternetConnection();
+    if (!isConnected) {
+      setState(() {
+        _isBackingUpToGoogleDrive = false;
+        _backupStatus =
+            "Connexion internet requise pour accéder à Google Drive";
+      });
+      return;
+    }
 
     try {
       final dbPath = await DbService.getDatabasePath();
@@ -40,17 +110,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         dbPath,
       );
 
-      if (drivePath != null) {
-        setState(() {
-          _isBackingUpToGoogleDrive = false;
-          _backupStatus = "Sauvegarde sur Google Drive réussie: $drivePath";
-        });
-      } else {
-        setState(() {
-          _isBackingUpToGoogleDrive = false;
-          _backupStatus = "Échec de la sauvegarde sur Google Drive";
-        });
-      }
+      setState(() {
+        _isBackingUpToGoogleDrive = false;
+        _backupStatus = drivePath != null
+            ? "Sauvegarde sur Google Drive réussie: $drivePath"
+            : "Échec de la sauvegarde sur Google Drive";
+      });
     } catch (e) {
       setState(() {
         _isBackingUpToGoogleDrive = false;
@@ -70,53 +135,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
         context,
       );
 
-      if (backupPath != null) {
-        String autoBackupPath = await _autoBackupBeforeImport();
-        if (autoBackupPath.isNotEmpty) {
-          _backupStatus = "Sauvegarde automatique effectuée : $autoBackupPath";
-        }
-
-        Database importedDb = await openDatabase(backupPath, readOnly: true);
-        bool membersOk = await MemberTableService.checkSchema(importedDb);
-        bool eventsOk = await EventTableService.checkSchema(importedDb);
-        bool orgsOk = await EventOrganizationTableService.checkSchema(
-          importedDb,
-        );
-        bool participantsOk = await EventParticipantTableService.checkSchema(
-          importedDb,
-        );
-        await importedDb.close();
-
-        if (!membersOk || !eventsOk || !orgsOk || !participantsOk) {
-          setState(() {
-            _isRestoringFromGoogleDrive = false;
-            _backupStatus =
-                "Erreur : le schéma de la base de données importée ne correspond pas à celui attendu.";
-          });
-          return;
-        }
-
-        final appDbPath = await DbService.getDatabasePath();
-        try {
-          await deleteDatabase(appDbPath);
-        } catch (e) {
-          developer.log(
-            'Erreur lors de la suppression de l\'ancienne base : $e',
-          );
-        }
-        await File(backupPath).copy(appDbPath);
-
-        setState(() {
-          _isRestoringFromGoogleDrive = false;
-          _backupStatus = "Restauration depuis Google Drive réussie !";
-        });
-      } else {
+      if (backupPath == null) {
         setState(() {
           _isRestoringFromGoogleDrive = false;
           _backupStatus =
               "Aucun fichier sélectionné ou erreur lors de la restauration";
         });
+        return;
       }
+
+      final String autoBackupPath = await _autoBackupBeforeImport();
+      if (autoBackupPath.isNotEmpty) {
+        _backupStatus = "Sauvegarde automatique effectuée : $autoBackupPath";
+      }
+
+      final Database importedDb = await openDatabase(
+        backupPath,
+        readOnly: true,
+      );
+      final bool schemaValid = await _validateDatabaseSchema(importedDb);
+      await importedDb.close();
+
+      if (!schemaValid) {
+        setState(() {
+          _isRestoringFromGoogleDrive = false;
+          _backupStatus =
+              "Le schéma de la base de données importée est invalide.";
+        });
+        return;
+      }
+
+      final appDbPath = await DbService.getDatabasePath();
+      try {
+        await deleteDatabase(appDbPath);
+      } catch (e) {
+        developer.log('Erreur suppression ancienne base : $e');
+      }
+      await File(backupPath).copy(appDbPath);
+
+      setState(() {
+        _isRestoringFromGoogleDrive = false;
+        _backupStatus = "Restauration depuis Google Drive réussie !";
+      });
     } catch (e) {
       setState(() {
         _isRestoringFromGoogleDrive = false;
@@ -126,156 +186,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _backupDatabase() async {
-    setState(() {
-      _isBackingUp = true;
-      _backupStatus = null;
-    });
-
-    final status = await Permission.storage.request();
-    if (!status.isGranted) {
-      setState(() {
-        _isBackingUp = false;
-        _backupStatus = "Permission d'accès au stockage refusée.";
-      });
-      return;
-    }
-
-    try {
-      String? directoryPath = await FilePicker.platform.getDirectoryPath(
-        dialogTitle: "Choisissez le dossier de sauvegarde",
-      );
-
-      if (directoryPath == null) {
-        final downloadsDir = await getExternalStorageDirectory();
-        if (downloadsDir != null) {
-          final dbPath = await DbService.getDatabasePath();
-          final dbFile = File(dbPath);
-          final backupFile = File('${downloadsDir.path}/attendance_backup.db');
-          await dbFile.copy(backupFile.path);
-          setState(() {
-            _isBackingUp = false;
-            _backupStatus =
-                "Aucun dossier choisi. Sauvegarde effectuée dans : ${backupFile.path}";
-          });
-        } else {
-          setState(() {
-            _isBackingUp = false;
-            _backupStatus =
-                "Sauvegarde annulée. Impossible de choisir un dossier et accès au dossier de téléchargement refusé.";
-          });
-        }
-        return;
-      }
-
-      final dbPath = await DbService.getDatabasePath();
-      final dbFile = File(dbPath);
-
-      if (!await dbFile.exists()) {
-        setState(() {
-          _isBackingUp = false;
-          _backupStatus = "Fichier de base de données introuvable.";
-        });
-        return;
-      }
-
-      final backupFile = File('$directoryPath/attendance_backup.db');
-      await dbFile.copy(backupFile.path);
-
-      setState(() {
-        _isBackingUp = false;
-        _backupStatus = "Sauvegarde réussie à : ${backupFile.path}";
-      });
-    } catch (e) {
-      setState(() {
-        _isBackingUp = false;
-        _backupStatus = "Erreur lors de la sauvegarde : $e";
-      });
-    }
-  }
-
-  Future<String> _autoBackupBeforeImport() async {
-    try {
-      final dbPath = await DbService.getDatabasePath();
-      final dbFile = File(dbPath);
-
-      if (!await dbFile.exists()) {
-        return "";
-      }
-
-      Directory backupDir;
-      if (Platform.isAndroid) {
-        backupDir = Directory(
-          '/storage/emulated/0/Documents/attendance_app_backup',
-        );
-      } else {
-        final docsDir = await getApplicationDocumentsDirectory();
-        backupDir = Directory(p.join(docsDir.path, "attendance_app_backup"));
-      }
-
-      if (!await backupDir.exists()) {
-        await backupDir.create(recursive: true);
-      }
-
-      final existing = backupDir
-          .listSync()
-          .whereType<File>()
-          .where(
-            (f) =>
-                p.basename(f.path).startsWith("attendance_backup_") &&
-                p.extension(f.path) == ".db",
-          )
-          .toList();
-      int maxNum = 0;
-      for (final f in existing) {
-        final match = RegExp(
-          r'attendance_backup_(\d+)\.db',
-        ).firstMatch(p.basename(f.path));
-        if (match != null) {
-          final num = int.tryParse(match.group(1) ?? "0");
-          if (num != null && num > maxNum) maxNum = num;
-        }
-      }
-      final nextNum = maxNum + 1;
-      final backupPath = p.join(
-        backupDir.path,
-        "attendance_backup_$nextNum.db",
-      );
-      await dbFile.copy(backupPath);
-      return backupPath;
-    } catch (e) {
-      return "";
-    }
-  }
-
   Future<void> _importDatabase() async {
     setState(() {
       _isImporting = true;
       _backupStatus = null;
     });
 
-    //demande la permission d'accès au stockage (Android 11+ nécessite manageExternalStorage)
-    PermissionStatus status = await Permission.storage.request();
-    if (!status.isGranted) {
-      // Android 11+ (API 30+)
-      if (await Permission.manageExternalStorage.isDenied ||
-          await Permission.manageExternalStorage.isPermanentlyDenied) {
-        await Permission.manageExternalStorage.request();
-      }
-      status = await Permission.manageExternalStorage.status;
-    }
-
-    if (!status.isGranted) {
-      setState(() {
-        _isImporting = false;
-        _backupStatus =
-            "Permission d'accès au stockage refusée. Veuillez autoriser l'accès dans les paramètres de l'application.";
-      });
-      return;
-    }
-
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
+      if (!await _checkStoragePermissions()) {
+        setState(() {
+          _isImporting = false;
+          _backupStatus = "Permission d'accès au stockage refusée.";
+        });
+        return;
+      }
+
+      final FilePickerResult? result = await FilePicker.platform.pickFiles(
         dialogTitle: "Sélectionnez la base de données à importer",
         type: FileType.any,
       );
@@ -288,44 +214,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return;
       }
 
-      String importPath = result.files.single.path!;
-
-      String backupPath = await _autoBackupBeforeImport();
+      final String importPath = result.files.single.path!;
+      final String backupPath = await _autoBackupBeforeImport();
       if (backupPath.isNotEmpty) {
-        setState(() {
-          _backupStatus = "Sauvegarde automatique effectuée : $backupPath";
-        });
+        _backupStatus = "Sauvegarde automatique effectuée : $backupPath";
       }
 
-      Database importedDb = await openDatabase(importPath, readOnly: true);
-
-      bool membersOk = await MemberTableService.checkSchema(importedDb);
-      bool eventsOk = await EventTableService.checkSchema(importedDb);
-      bool orgsOk = await EventOrganizationTableService.checkSchema(importedDb);
-      bool participantsOk = await EventParticipantTableService.checkSchema(
-        importedDb,
+      final Database importedDb = await openDatabase(
+        importPath,
+        readOnly: true,
       );
-
+      final bool schemaValid = await _validateDatabaseSchema(importedDb);
       await importedDb.close();
 
-      if (!membersOk || !eventsOk || !orgsOk || !participantsOk) {
+      if (!schemaValid) {
         setState(() {
           _isImporting = false;
           _backupStatus =
-              "Erreur : le schéma de la base de données importée ne correspond pas à celui attendu.";
+              "Le schéma de la base de données importée est invalide.";
         });
         return;
       }
 
       final appDbPath = await DbService.getDatabasePath();
-      final appDbFile = File(appDbPath);
-
       try {
         await deleteDatabase(appDbPath);
       } catch (e) {
-        developer.log('Erreur lors de la suppression de l\'ancienne base : $e');
+        developer.log('Erreur suppression ancienne base : $e');
       }
-
       await File(importPath).copy(appDbPath);
 
       setState(() {
@@ -341,6 +257,72 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<bool> _checkStoragePermissions() async {
+    PermissionStatus status = await Permission.storage.request();
+    if (!status.isGranted) {
+      if (await Permission.manageExternalStorage.isDenied ||
+          await Permission.manageExternalStorage.isPermanentlyDenied) {
+        await Permission.manageExternalStorage.request();
+      }
+      status = await Permission.manageExternalStorage.status;
+    }
+    return status.isGranted;
+  }
+
+  Future<bool> _validateDatabaseSchema(Database db) async {
+    return await MemberTableService.checkSchema(db) &&
+        await EventTableService.checkSchema(db) &&
+        await EventOrganizationTableService.checkSchema(db) &&
+        await EventParticipantTableService.checkSchema(db);
+  }
+
+  Future<String> _autoBackupBeforeImport() async {
+    try {
+      final dbPath = await DbService.getDatabasePath();
+      final dbFile = File(dbPath);
+
+      if (!await dbFile.exists()) return "";
+
+      final Directory backupDir = Platform.isAndroid
+          ? Directory('/storage/emulated/0/Documents/attendance_app_backup')
+          : Directory(
+              p.join(
+                (await getApplicationDocumentsDirectory()).path,
+                "attendance_app_backup",
+              ),
+            );
+
+      if (!await backupDir.exists()) await backupDir.create(recursive: true);
+
+      final existing = backupDir
+          .listSync()
+          .whereType<File>()
+          .where(
+            (f) =>
+                p.basename(f.path).startsWith("attendance_backup_") &&
+                p.extension(f.path) == ".db",
+          )
+          .toList();
+
+      int maxNum = existing.fold(0, (max, f) {
+        final match = RegExp(
+          r'attendance_backup_(\d+)\.db',
+        ).firstMatch(p.basename(f.path));
+        final num = int.tryParse(match?.group(1) ?? "0") ?? 0;
+        return num > max ? num : max;
+      });
+
+      final backupPath = p.join(
+        backupDir.path,
+        "attendance_backup_${maxNum + 1}.db",
+      );
+      await dbFile.copy(backupPath);
+      return backupPath;
+    } catch (e) {
+      return "";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppLayout(
@@ -350,75 +332,160 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Sauvegarder les données",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              "Vous pouvez sauvegarder la base de données de l'application à l'emplacement de votre choix. "
-              "Cela vous permet de conserver une copie de vos données en cas de besoin.",
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.backup),
-              label: _isBackingUp
-                  ? const Text("Sauvegarde en cours...")
-                  : const Text("Sauvegarder localement"),
-              onPressed: _isBackingUp ? null : _backupDatabase,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.cloud_upload),
-              label: _isBackingUpToGoogleDrive
-                  ? const Text("Sauvegarde sur Google Drive en cours...")
-                  : const Text("Sauvegarder sur Google Drive"),
-              onPressed: _isBackingUpToGoogleDrive
-                  ? null
-                  : _backupToGoogleDrive,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.cloud_download),
-              label: _isRestoringFromGoogleDrive
-                  ? const Text("Restauration depuis Google Drive en cours...")
-                  : const Text("Restaurer depuis Google Drive"),
-              onPressed: _isRestoringFromGoogleDrive
-                  ? null
-                  : _restoreFromGoogleDrive,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.file_upload),
-              label: _isImporting
-                  ? const Text("Importation en cours...")
-                  : const Text("Importer une base de données"),
-              onPressed: _isImporting ? null : _importDatabase,
-            ),
-            if (_backupStatus != null) ...[
-              const SizedBox(height: 16),
-              Text(
-                _backupStatus!,
-                style: TextStyle(
-                  color:
-                      _backupStatus!.contains("réussie") ||
-                          _backupStatus!.contains("Importation réussie") ||
-                          _backupStatus!.contains("Google Drive réussie")
-                      ? Colors.green
-                      : Colors.red,
+            _buildSection(
+              title: "Sauvegarde locale",
+              description:
+                  "Créez une copie de votre base de données sur votre appareil.",
+              children: [
+                _buildActionButton(
+                  icon: Icons.backup,
+                  label: "Sauvegarder localement",
+                  isLoading: _isBackingUp,
+                  onPressed: _backupDatabase,
                 ),
-              ),
-            ],
+                _buildActionButton(
+                  icon: Icons.file_upload,
+                  label: "Importer une base de données",
+                  isLoading: _isImporting,
+                  onPressed: _importDatabase,
+                ),
+              ],
+            ),
+
             const SizedBox(height: 32),
             const Divider(),
             const SizedBox(height: 16),
-            const Text(
-              "Conseil : Conservez la sauvegarde dans un endroit sûr (clé USB, cloud, etc.) pour éviter toute perte de données.",
-              style: TextStyle(fontStyle: FontStyle.italic),
+
+            _buildSection(
+              title: "Sauvegarde cloud",
+              description:
+                  "Sauvegardez et restaurez vos données depuis Google Drive.",
+              children: [
+                _buildActionButton(
+                  icon: Icons.cloud_upload,
+                  label: "Sauvegarder sur Google Drive",
+                  isLoading: _isBackingUpToGoogleDrive,
+                  onPressed: _backupToGoogleDrive,
+                ),
+                _buildActionButton(
+                  icon: Icons.cloud_download,
+                  label: "Restaurer depuis Google Drive",
+                  isLoading: _isRestoringFromGoogleDrive,
+                  onPressed: _restoreFromGoogleDrive,
+                ),
+              ],
+            ),
+
+            if (_backupStatus != null) ...[
+              const SizedBox(height: 24),
+              _buildStatusMessage(_backupStatus!),
+            ],
+            const SizedBox(height: 24),
+            _buildInfoBox(
+              "Conseil : Conservez plusieurs sauvegardes dans différents endroits (appareil local, cloud, support externe) pour maximiser la sécurité de vos données.",
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildSection({
+    required String title,
+    required String description,
+    required List<Widget> children,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Text(description, style: TextStyle(color: Colors.grey[700])),
+        const SizedBox(height: 16),
+        ...children,
+      ],
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required bool isLoading,
+    required VoidCallback? onPressed,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: ElevatedButton.icon(
+        icon: Icon(icon),
+        label: isLoading ? const CircularProgressIndicator() : Text(label),
+        onPressed: isLoading ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(double.infinity, 48),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusMessage(String message) {
+    final bool isSuccess =
+        message.contains("réussie") ||
+        message.contains("réussi") ||
+        message.contains("Google Drive réussie");
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isSuccess ? Colors.green[50] : Colors.red[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isSuccess ? Colors.green : Colors.red,
+          width: 1,
+        ),
+      ),
+      child: Text(
+        message,
+        style: TextStyle(
+          color: isSuccess ? Colors.green[800] : Colors.red[800],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoBox(String text) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.blue[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blue, width: 1),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline, color: Colors.blue),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: Colors.blue[800],
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool> _checkInternetConnection() async {
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } on SocketException catch (_) {
+      return false;
+    }
   }
 }

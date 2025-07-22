@@ -16,26 +16,32 @@ class GoogleDriveService {
 
   static Future<String?> backupFileToDrive(String filePath) async {
     try {
-      if (_driveApi == null) {
-        await _initializeDriveApi();
-        if (_driveApi == null) {
-          debugPrint('Erreur: Impossible d\'initialiser Google Drive API');
-
+      try {
+        final result = await InternetAddress.lookup('google.com');
+        if (result.isEmpty || result[0].rawAddress.isEmpty) {
+          debugPrint('Pas de connexion internet');
           return null;
         }
+      } on SocketException catch (_) {
+        debugPrint('Pas de connexion internet');
+        return null;
+      }
+
+      if (_driveApi == null) {
+        await _initializeDriveApi();
+        if (_driveApi == null) return null;
       }
 
       final String folderId = await _getOrCreateBackupFolder();
       final File file = File(filePath);
 
       if (!await file.exists()) {
-        debugPrint('Erreur: Le fichier à sauvegarder n\'existe pas');
-
+        debugPrint('Fichier à sauvegarder introuvable');
         return null;
       }
 
       final String fileName =
-          'attendance_app_${DateTime.now().millisecondsSinceEpoch}.db';
+          'attendance_backup_${DateTime.now().toIso8601String()}.db';
       final drive.File fileMetadata = drive.File()
         ..name = fileName
         ..parents = [folderId];
@@ -45,13 +51,12 @@ class GoogleDriveService {
         uploadMedia: drive.Media(file.openRead(), file.lengthSync()),
       );
 
-      debugPrint(
-        'Sauvegarde réussie: ${uploadedFile.name} (ID: ${uploadedFile.id})',
-      );
-
-      return '${uploadedFile.name} (ID: ${uploadedFile.id})';
+      return uploadedFile.id;
     } catch (e) {
       debugPrint('Erreur Google Drive: $e');
+      if (e is SocketException || e.toString().contains('SocketException')) {
+        return 'Erreur de connexion - Vérifiez votre accès internet';
+      }
       return null;
     }
   }
