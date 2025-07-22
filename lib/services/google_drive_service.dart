@@ -193,6 +193,15 @@ class GoogleDriveService {
 
     return newFolder.id!;
   }
+
+  static Future<GoogleSignInAccount?> getCurrentUser() async {
+    try {
+      return await _googleSignIn.signInSilently();
+    } catch (e) {
+      debugPrint('Erreur lors de la récupération du user: $e');
+      return null;
+    }
+  }
 }
 
 class AuthClient extends http.BaseClient {

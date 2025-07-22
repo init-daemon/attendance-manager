@@ -20,6 +20,7 @@ import 'package:attendance_app/core/widgets/error_page.dart';
 import 'package:attendance_app/core/widgets/app_layout.dart';
 import 'package:attendance_app/features/dashboard/screens/dashboard_screen.dart';
 import 'package:attendance_app/features/settings/screens/settings_screen.dart';
+import 'package:attendance_app/features/settings/screens/google_account_screen.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -82,6 +83,8 @@ class AppRouter {
         );
       case '/settings':
         return MaterialPageRoute(builder: (_) => const SettingsScreen());
+      case '/google-account':
+        return MaterialPageRoute(builder: (_) => const GoogleAccountScreen());
       case '/error':
         final message = settings.arguments as String?;
         return MaterialPageRoute(
