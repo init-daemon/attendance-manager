@@ -46,7 +46,16 @@ class EventsTable extends StatelessWidget {
                       ),
                       IconButton(
                         icon: const Icon(Icons.edit),
-                        onPressed: onEdit,
+                        onPressed: () async {
+                          final result = await Navigator.pushNamed(
+                            context,
+                            '/events/edit',
+                            arguments: event,
+                          );
+                          if (result != null && result is Event) {
+                            if (onEdit != null) onEdit!();
+                          }
+                        },
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete),
