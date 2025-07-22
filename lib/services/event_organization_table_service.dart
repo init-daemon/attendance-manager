@@ -76,4 +76,26 @@ class EventOrganizationTableService {
     final db = await AppDbService.database;
     await db.delete(table);
   }
+
+  static Future<bool> checkSchema(Database db) async {
+    const expected = [
+      {'name': 'id', 'type': 'TEXT'},
+      {'name': 'event_id', 'type': 'TEXT'},
+      {'name': 'member_id', 'type': 'TEXT'},
+      {'name': 'date', 'type': 'TEXT'},
+      {'name': 'description', 'type': 'TEXT'},
+      {'name': 'location', 'type': 'TEXT'},
+    ];
+    final info = await db.rawQuery("PRAGMA table_info(event_organizations)");
+    if (info.length != expected.length) return false;
+    for (var i = 0; i < expected.length; i++) {
+      if (info[i]['name'] != expected[i]['name'] ||
+          !(info[i]['type'] as String).toUpperCase().contains(
+            expected[i]['type']!,
+          )) {
+        return false;
+      }
+    }
+    return true;
+  }
 }

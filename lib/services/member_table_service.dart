@@ -64,4 +64,25 @@ class MemberTableService {
 
     await db.delete('members', where: 'id = ?', whereArgs: [id]);
   }
+
+  static Future<bool> checkSchema(Database db) async {
+    const expected = [
+      {'name': 'id', 'type': 'TEXT'},
+      {'name': 'firstName', 'type': 'TEXT'},
+      {'name': 'lastName', 'type': 'TEXT'},
+      {'name': 'birthDate', 'type': 'TEXT'},
+      {'name': 'isHidden', 'type': 'INTEGER'},
+    ];
+    final info = await db.rawQuery("PRAGMA table_info(members)");
+    if (info.length != expected.length) return false;
+    for (var i = 0; i < expected.length; i++) {
+      if (info[i]['name'] != expected[i]['name'] ||
+          !(info[i]['type'] as String).toUpperCase().contains(
+            expected[i]['type']!,
+          )) {
+        return false;
+      }
+    }
+    return true;
+  }
 }

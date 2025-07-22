@@ -91,4 +91,24 @@ class EventParticipantTableService {
     final db = await AppDbService.database;
     await db.delete('event_participants');
   }
+
+  static Future<bool> checkSchema(Database db) async {
+    const expected = [
+      {'name': 'id', 'type': 'TEXT'},
+      {'name': 'event_organization_id', 'type': 'TEXT'},
+      {'name': 'individual_id', 'type': 'TEXT'},
+      {'name': 'is_present', 'type': 'INTEGER'},
+    ];
+    final info = await db.rawQuery("PRAGMA table_info(event_participants)");
+    if (info.length != expected.length) return false;
+    for (var i = 0; i < expected.length; i++) {
+      if (info[i]['name'] != expected[i]['name'] ||
+          !(info[i]['type'] as String).toUpperCase().contains(
+            expected[i]['type']!,
+          )) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
