@@ -47,53 +47,46 @@ class _MembersListScreenState extends State<MembersListScreen> {
       whereArgs = [1];
     }
 
-    Future<List<Map<String, dynamic>>> future;
     if (_searchText.isEmpty) {
-      future = DbService.getPaged(
-        tableName: 'members',
-        limit: _pageSize,
-        offset: _currentPage * _pageSize,
-        orderBy: 'lastName ASC',
-      );
-      if (where != null) {
-        future = future.then(
-          (list) => list.where((m) => m['isHidden'] == whereArgs![0]).toList(),
-        );
-      }
       setState(() {
-        _membersFuture = future.then(
-          (maps) => maps.map((map) => Member.fromMap(map)).toList(),
-        );
-        DbService.count('members').then((count) {
+        _membersFuture = DbService.getPaged(
+          tableName: 'members',
+          limit: _pageSize,
+          offset: _currentPage * _pageSize,
+          orderBy: 'lastName ASC',
+          where: where,
+          whereArgs: whereArgs,
+        ).then((maps) => maps.map((map) => Member.fromMap(map)).toList());
+
+        DbService.count('members', where: where, whereArgs: whereArgs).then((
+          count,
+        ) {
           setState(() {
             _totalMembers = count;
           });
         });
       });
     } else {
-      future = DbService.search(
-        tableName: 'members',
-        query: _searchText,
-        fields: ['firstName', 'lastName'],
-        limit: _pageSize,
-        offset: _currentPage * _pageSize,
-        orderBy: 'lastName ASC',
-      );
-      if (where != null) {
-        future = future.then(
-          (list) => list.where((m) => m['isHidden'] == whereArgs![0]).toList(),
-        );
-      }
       setState(() {
-        _membersFuture = future.then(
-          (maps) => maps.map((map) => Member.fromMap(map)).toList(),
-        );
+        _membersFuture = DbService.search(
+          tableName: 'members',
+          query: _searchText,
+          fields: ['firstName', 'lastName'],
+          limit: _pageSize,
+          offset: _currentPage * _pageSize,
+          orderBy: 'lastName ASC',
+          where: where,
+          whereArgs: whereArgs,
+        ).then((maps) => maps.map((map) => Member.fromMap(map)).toList());
+
         DbService.search(
           tableName: 'members',
           query: _searchText,
           fields: ['firstName', 'lastName'],
           limit: 1000000,
           offset: 0,
+          where: where,
+          whereArgs: whereArgs,
         ).then((maps) {
           setState(() {
             _totalMembers = maps.length;
