@@ -340,7 +340,9 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                 stat.eventName,
                 style: const TextStyle(fontWeight: FontWeight.w500),
               ),
-              subtitle: Row(
+              subtitle: Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -352,6 +354,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.check_circle,
@@ -369,7 +372,6 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -380,6 +382,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.cancel,
@@ -397,7 +400,6 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -408,6 +410,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.group,
