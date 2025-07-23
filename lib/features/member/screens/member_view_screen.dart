@@ -1,3 +1,4 @@
+import 'package:attendance_app/services/date_service.dart';
 import 'package:flutter/material.dart';
 import 'package:attendance_app/features/member/models/member.dart';
 import 'package:attendance_app/features/member/widgets/profile_avatar.dart';
@@ -248,6 +249,23 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                             ),
                         ],
                       ),
+                      if (startDate != null || endDate != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            'Filtre appliqué : '
+                            '${startDate != null ? 'Du ${DateService.formatFr(startDate!, withHour: false)} ' : ''}'
+                            '${endDate != null ? 'au ${DateService.formatFr(endDate!, withHour: false)}' : ''}',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.color
+                                      ?.withOpacity(0.7),
+                                ),
+                          ),
+                        ),
                       const SizedBox(height: 18),
                       loading
                           ? const Center(child: CircularProgressIndicator())
