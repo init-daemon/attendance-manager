@@ -1,7 +1,11 @@
 import 'package:faker/faker.dart';
+import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:attendance_app/features/member/models/member.dart';
 import 'package:attendance_app/services/app_db_service.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:excel/excel.dart';
+import 'dart:io';
 
 class MemberTableService {
   static Future<void> createTable(Database db) async {
@@ -84,5 +88,117 @@ class MemberTableService {
       }
     }
     return true;
+  }
+
+  static Future<Map<String, dynamic>> importMembersFromExcel() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['xlsx', 'xls'],
+        allowMultiple: false,
+      );
+
+      if (result == null) {
+        return {'success': false, 'message': 'Import annulé', 'duplicates': []};
+      }
+
+      final filePath = result.files.single.path;
+      if (filePath == null) {
+        return {
+          'success': false,
+          'message': 'Accès au fichier refusé',
+          'duplicates': [],
+        };
+      }
+
+      final file = File(filePath);
+      if (!await file.exists()) {
+        return {
+          'success': false,
+          'message': 'Fichier introuvable',
+          'duplicates': [],
+        };
+      }
+
+      final bytes = await file.readAsBytes();
+      if (bytes.isEmpty) {
+        return {'success': false, 'message': 'Fichier vide', 'duplicates': []};
+      }
+
+      Excel excel;
+      try {
+        excel = Excel.decodeBytes(bytes);
+      } catch (e) {
+        return {
+          'success': false,
+          'message': 'Format de fichier Excel invalide',
+          'duplicates': [],
+        };
+      }
+
+      if (excel.tables.isEmpty) {
+        return {
+          'success': false,
+          'message': 'Aucune feuille trouvée',
+          'duplicates': [],
+        };
+      }
+
+      final sheet = excel.tables.values.first;
+      final db = await AppDbService.database;
+      List<Map<String, dynamic>> duplicates = [];
+      int importedCount = 0;
+
+      for (var i = 0; i < sheet.rows.length; i++) {
+        try {
+          final row = sheet.rows[i];
+          if (row.length < 2) continue;
+
+          final lastName = row[0]?.value?.toString().trim() ?? '';
+          final firstName = row[1]?.value?.toString().trim() ?? '';
+
+          if (lastName.isEmpty || firstName.isEmpty) continue;
+
+          final existing = await db.query(
+            'members',
+            where: 'lastName = ? AND firstName = ?',
+            whereArgs: [lastName, firstName],
+          );
+
+          if (existing.isNotEmpty) {
+            duplicates.add({'lastName': lastName, 'firstName': firstName});
+            continue;
+          }
+
+          await db.insert(
+            'members',
+            Member(
+              id: '${DateTime.now().millisecondsSinceEpoch}_$i',
+              firstName: firstName,
+              lastName: lastName,
+              birthDate: DateTime.now(),
+              isHidden: false,
+            ).toMap(),
+          );
+
+          importedCount++;
+        } catch (e) {
+          debugPrint('Erreur ligne ${i + 1}: $e');
+        }
+      }
+
+      return {
+        'success': true,
+        'message': 'Succès: $importedCount membres importés',
+        'duplicates': duplicates,
+      };
+    } catch (e) {
+      debugPrint('Erreur d\'import: $e');
+      return {
+        'success': false,
+        'message': 'Erreur technique: ${e.toString()}',
+        'duplicates': [],
+      };
+    }
   }
 }
