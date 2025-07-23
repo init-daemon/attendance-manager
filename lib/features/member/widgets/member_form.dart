@@ -15,7 +15,7 @@ class _MemberFormState extends State<MemberForm> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
-  late DateTime _birthDate;
+  DateTime? _birthDate;
   late bool _isHidden;
 
   @override
@@ -27,7 +27,7 @@ class _MemberFormState extends State<MemberForm> {
     _lastNameController = TextEditingController(
       text: widget.member?.lastName ?? '',
     );
-    _birthDate = widget.member?.birthDate ?? DateTime.now();
+    _birthDate = widget.member?.birthDate;
     _isHidden = widget.member?.isHidden ?? false;
   }
 
@@ -58,14 +58,26 @@ class _MemberFormState extends State<MemberForm> {
             },
           ),
           ListTile(
-            title: const Text('Date de naissance'),
+            title: const Text('Date de naissance (optionnel)'),
             subtitle: Text(
-              '${_birthDate.day}/${_birthDate.month}/${_birthDate.year}',
+              _birthDate != null
+                  ? '${_birthDate!.day}/${_birthDate!.month}/${_birthDate!.year}'
+                  : 'Non spécifiée',
             ),
+            trailing: _birthDate != null
+                ? IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      setState(() {
+                        _birthDate = null;
+                      });
+                    },
+                  )
+                : null,
             onTap: () async {
               final selectedDate = await showDatePicker(
                 context: context,
-                initialDate: _birthDate,
+                initialDate: _birthDate ?? DateTime.now(),
                 firstDate: DateTime(1900),
                 lastDate: DateTime.now(),
               );

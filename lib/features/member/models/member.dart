@@ -2,14 +2,14 @@ class Member {
   final String id;
   String firstName;
   String lastName;
-  DateTime birthDate;
+  DateTime? birthDate;
   bool isHidden;
 
   Member({
     required this.id,
     required this.firstName,
     required this.lastName,
-    required this.birthDate,
+    this.birthDate,
     this.isHidden = false,
   });
 
@@ -24,7 +24,7 @@ class Member {
       'id': id,
       'firstName': firstName,
       'lastName': lastName,
-      'birthDate': birthDate.toIso8601String(),
+      'birthDate': birthDate?.toIso8601String(),
       'isHidden': isHidden ? 1 : 0,
     };
   }
@@ -34,7 +34,9 @@ class Member {
       id: map['id'],
       firstName: map['firstName'],
       lastName: map['lastName'],
-      birthDate: DateTime.parse(map['birthDate']),
+      birthDate: map['birthDate'] != null
+          ? DateTime.parse(map['birthDate'])
+          : null,
       isHidden: map['isHidden'] == 1,
     );
   }
