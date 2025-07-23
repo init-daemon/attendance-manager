@@ -52,19 +52,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   DashboardCard(
                     count: memberCount,
-                    label: 'Membres visibles',
+                    label: 'Membres',
+                    routeName: '/members',
                     color: Colors.blue,
                     icon: Icons.people,
                   ),
                   DashboardCard(
                     count: eventCount,
-                    label: 'Événements',
+                    label: 'Liste d\'événements',
+                    routeName: '/events',
                     color: Colors.green,
                     icon: Icons.event,
                   ),
                   DashboardCard(
                     count: eventOrgCount,
                     label: 'Événements organisés',
+                    routeName: '/event-organizations',
                     color: Colors.orange,
                     icon: Icons.groups,
                   ),
