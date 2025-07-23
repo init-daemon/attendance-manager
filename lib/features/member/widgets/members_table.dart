@@ -22,6 +22,52 @@ class MembersTable extends StatelessWidget {
     if (onEdit != null) onEdit!();
   }
 
+  Future<void> _showDeleteConfirmationDialog(
+    BuildContext context,
+    Member member,
+  ) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            member.isHidden ? 'Restaurer le membre' : 'Supprimer le membre',
+          ),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text(
+                  member.isHidden
+                      ? 'Voulez-vous vraiment restaurer ce membre ?'
+                      : 'Voulez-vous vraiment supprimer ce membre ?',
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Annuler'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text(
+                member.isHidden ? 'Restaurer' : 'Supprimer',
+                style: TextStyle(color: Colors.red),
+              ),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _toggleHide(context, member);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -33,7 +79,7 @@ class MembersTable extends StatelessWidget {
             DataColumn(label: Text('Actions')),
             DataColumn(label: Text('Nom')),
             DataColumn(label: Text('Prénom')),
-            DataColumn(label: Text('Caché')),
+            DataColumn(label: Text('Status')),
             DataColumn(label: Text('Date de naissance')),
           ],
           rows: members.map((member) {
@@ -76,14 +122,16 @@ class MembersTable extends StatelessWidget {
                       ),
                       IconButton(
                         icon: Icon(
-                          member.isHidden ? Icons.person_off : Icons.person,
+                          member.isHidden
+                              ? Icons.restore_from_trash
+                              : Icons.delete,
                           color: iconColor,
                         ),
                         tooltip: member.isHidden
-                            ? 'Afficher le membre'
-                            : 'Cacher le membre',
+                            ? 'Restaurer le membre'
+                            : 'Supprimer le membre',
                         onPressed: () async {
-                          await _toggleHide(context, member);
+                          await _showDeleteConfirmationDialog(context, member);
                         },
                       ),
                     ],
@@ -102,7 +150,7 @@ class MembersTable extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      member.isHidden ? 'Oui' : 'Non',
+                      member.isHidden ? 'Supprimé' : 'Actif',
                       style: TextStyle(
                         color: colorScheme.onSecondaryContainer,
                         fontWeight: FontWeight.bold,

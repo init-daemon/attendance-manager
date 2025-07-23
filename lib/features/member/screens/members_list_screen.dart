@@ -248,9 +248,12 @@ class _MembersListScreenState extends State<MembersListScreen> {
               DropdownButton<String>(
                 value: _hiddenFilter,
                 items: const [
-                  DropdownMenuItem(value: 'visible', child: Text('Non cachés')),
+                  DropdownMenuItem(
+                    value: 'visible',
+                    child: Text('Membre actif'),
+                  ),
                   DropdownMenuItem(value: 'all', child: Text('Tous')),
-                  DropdownMenuItem(value: 'hidden', child: Text('Cachés')),
+                  DropdownMenuItem(value: 'hidden', child: Text('Corbeille')),
                 ],
                 onChanged: (value) {
                   if (value != null) {
