@@ -4,8 +4,14 @@ import 'package:attendance_app/features/member/models/member.dart';
 class MemberForm extends StatefulWidget {
   final Member? member;
   final Function(Member) onSave;
+  final bool isCreate;
 
-  const MemberForm({super.key, this.member, required this.onSave});
+  const MemberForm({
+    super.key,
+    this.member,
+    required this.onSave,
+    this.isCreate = true,
+  });
 
   @override
   State<MemberForm> createState() => _MemberFormState();
@@ -88,15 +94,16 @@ class _MemberFormState extends State<MemberForm> {
               }
             },
           ),
-          SwitchListTile(
-            title: const Text('Caché'),
-            value: _isHidden,
-            onChanged: (value) {
-              setState(() {
-                _isHidden = value;
-              });
-            },
-          ),
+          if (!widget.isCreate)
+            SwitchListTile(
+              title: const Text('Mise en corbeille'),
+              value: _isHidden,
+              onChanged: (value) {
+                setState(() {
+                  _isHidden = value;
+                });
+              },
+            ),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
