@@ -19,7 +19,7 @@ class DbService {
       clear: MemberTableService.clear,
       seed: (count) => MemberTableService.seed(count: count),
       fresh: fresh,
-      seedCount: 10,
+      seedCount: 100,
     );
 
     await _initializeTable(
@@ -27,7 +27,7 @@ class DbService {
       clear: EventTableService.clear,
       seed: (count) => EventTableService.seed(count: count),
       fresh: fresh,
-      seedCount: 10,
+      seedCount: 20,
     );
 
     await _initializeTable(
@@ -35,7 +35,7 @@ class DbService {
       clear: EventOrganizationTableService.clear,
       seed: (count) => EventOrganizationTableService.seed(count: count),
       fresh: fresh,
-      seedCount: 5,
+      seedCount: 200,
     );
   }
 

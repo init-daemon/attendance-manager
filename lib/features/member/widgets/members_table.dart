@@ -111,7 +111,14 @@ class MembersTable extends StatelessWidget {
                   ),
                 ),
                 DataCell(
-                  Text(DateService.formatFr(member.birthDate, withHour: false)),
+                  Text(
+                    member.birthDate != null
+                        ? DateService.formatFr(
+                            member.birthDate!,
+                            withHour: false,
+                          )
+                        : 'Non spécifiée',
+                  ),
                 ),
               ],
             );
