@@ -112,8 +112,10 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
   }
 
   bool _isInInterval(DateTime date) {
-    if (startDate != null && date.isBefore(startDate!)) return false;
-    if (endDate != null && date.isAfter(endDate!)) return false;
+    if (startDate == null || endDate == null) return true;
+
+    if (date.isBefore(startDate!)) return false;
+    if (date.isAfter(endDate!)) return false;
     return true;
   }
 
@@ -252,18 +254,31 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                       if (startDate != null || endDate != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            'Filtre appliqué : '
-                            '${startDate != null ? 'Du ${DateService.formatFr(startDate!, withHour: false)} ' : ''}'
-                            '${endDate != null ? 'au ${DateService.formatFr(endDate!, withHour: false)}' : ''}',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.color
-                                      ?.withOpacity(0.7),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (startDate != null && endDate != null)
+                                Text(
+                                  'Filtre appliqué : Du ${DateService.formatFr(startDate!, withHour: false)} au ${DateService.formatFr(endDate!, withHour: false)}',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.color
+                                            ?.withOpacity(0.7),
+                                      ),
                                 ),
+                              if (startDate == null || endDate == null)
+                                Text(
+                                  'Veuillez définir les deux dates (début et fin) pour appliquer le filtre',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Colors.orange[700],
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                ),
+                            ],
                           ),
                         ),
                       const SizedBox(height: 18),
