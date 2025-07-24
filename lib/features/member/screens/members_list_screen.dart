@@ -137,7 +137,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
     });
 
     if (result['success'] == true) {
-      _loadMembers();
+      _membersFuture = _loadMembers();
     }
   }
 
@@ -212,6 +212,9 @@ class _MembersListScreenState extends State<MembersListScreen> {
             const SizedBox(height: 8),
             const Text('Colonne 1: Nom (obligatoire)'),
             const Text('Colonne 2: Prénom (obligatoire)'),
+            const Text(
+              'Colonne 3: Date de naissance au format jj/mm/aaaa (facultatif)',
+            ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _handleImport,
