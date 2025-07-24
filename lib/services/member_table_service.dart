@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:excel/excel.dart';
 import 'dart:io';
 import 'dart:math';
+import 'package:intl/intl.dart';
 
 class MemberTableService {
   static Future<void> createTable(Database db) async {
@@ -150,6 +151,7 @@ class MemberTableService {
       final sheet = excel.tables.values.first;
       final db = await AppDbService.database;
       List<Map<String, dynamic>> duplicates = [];
+      List<Map<String, dynamic>> invalidDates = [];
       int importedCount = 0;
 
       for (var i = 0; i < sheet.rows.length; i++) {
@@ -174,24 +176,57 @@ class MemberTableService {
           }
 
           DateTime? birthDate;
+
           if (row.length >= 3) {
             final dateValue = row[2]?.value;
-            if (dateValue is String) {
-              birthDate = DateTime.tryParse(dateValue);
-            } else if (dateValue is DateTime) {
-              birthDate = dateValue;
+
+            if (dateValue != null) {
+              if (dateValue is DateTime) {
+                birthDate = dateValue;
+              } else {
+                final dateStr = dateValue.toString().trim();
+                if (dateStr.isNotEmpty) {
+                  try {
+                    birthDate = DateTime.tryParse(dateStr);
+
+                    if (birthDate == null) {
+                      final formats = [
+                        'yyyy-MM-ddTHH:mm:ss',
+                        'yyyy-MM-dd',
+                        'dd/MM/yyyy',
+                        'yyyy/MM/dd',
+                      ];
+
+                      for (final format in formats) {
+                        try {
+                          birthDate = DateFormat(format).parse(dateStr);
+                          break;
+                        } catch (_) {}
+                      }
+                    }
+                  } catch (e) {
+                    debugPrint('Date parsing error: $e');
+                  }
+                }
+              }
             }
           }
 
-          await db.insert(
+          final memberMap = Member(
+            id: '${DateTime.now().millisecondsSinceEpoch}_$i',
+            firstName: firstName,
+            lastName: lastName,
+            birthDate: birthDate,
+            isHidden: false,
+          ).toMap();
+
+          await db.insert('members', memberMap);
+
+          final inserted = await db.query(
             'members',
-            Member(
-              id: '${DateTime.now().millisecondsSinceEpoch}_$i',
-              firstName: firstName,
-              lastName: lastName,
-              birthDate: birthDate,
-              isHidden: false,
-            ).toMap(),
+            where: 'id = ?',
+            whereArgs: [memberMap['id']],
+            limit: 1,
           );
 
           importedCount++;
@@ -200,10 +235,25 @@ class MemberTableService {
         }
       }
 
+      String message = 'Succès: $importedCount membres importés';
+      if (duplicates.isNotEmpty) {
+        message += ' | ${duplicates.length} doublons ignorés';
+      }
+      if (invalidDates.isNotEmpty) {
+        message += ' | ${invalidDates.length} dates invalides';
+        for (var i = 0; i < invalidDates.length && i < 3; i++) {
+          final error = invalidDates[i];
+          message +=
+              '\n- Ligne ${error['row']}: ${error['firstName']} '
+              '${error['lastName']} -> "${error['invalidDate']}"';
+        }
+      }
+
       return {
         'success': true,
-        'message': 'Succès: $importedCount membres importés',
+        'message': message,
         'duplicates': duplicates,
+        'invalidDates': invalidDates,
       };
     } catch (e) {
       debugPrint('Erreur d\'import: $e');
@@ -211,6 +261,7 @@ class MemberTableService {
         'success': false,
         'message': 'Erreur technique: ${e.toString()}',
         'duplicates': [],
+        'invalidDates': [],
       };
     }
   }
