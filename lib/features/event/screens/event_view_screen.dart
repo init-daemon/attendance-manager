@@ -264,8 +264,10 @@ class _EventViewScreenState extends State<EventViewScreen> {
                               ],
                             ),
                       const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        alignment: WrapAlignment.spaceBetween,
                         children: [
                           ElevatedButton.icon(
                             icon: const Icon(Icons.event),
@@ -278,37 +280,32 @@ class _EventViewScreenState extends State<EventViewScreen> {
                               );
                             },
                           ),
-                          Row(
-                            children: [
-                              ElevatedButton.icon(
-                                icon: const Icon(Icons.edit),
-                                label: const Text('Modifier'),
-                                onPressed: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    EventEditScreen.routeName,
-                                    arguments: widget.event,
-                                  ).then((updatedEvent) {
-                                    if (updatedEvent != null &&
-                                        updatedEvent is Event) {
-                                      Navigator.pop(context, updatedEvent);
-                                    }
-                                  });
-                                },
-                              ),
-                              const SizedBox(width: 12),
-                              ElevatedButton.icon(
-                                icon: const Icon(Icons.list),
-                                label: const Text('Liste'),
-                                onPressed: () {
-                                  Navigator.pushNamedAndRemoveUntil(
-                                    context,
-                                    '/events',
-                                    (route) => false,
-                                  );
-                                },
-                              ),
-                            ],
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.edit),
+                            label: const Text('Modifier'),
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                EventEditScreen.routeName,
+                                arguments: widget.event,
+                              ).then((updatedEvent) {
+                                if (updatedEvent != null &&
+                                    updatedEvent is Event) {
+                                  Navigator.pop(context, updatedEvent);
+                                }
+                              });
+                            },
+                          ),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.list),
+                            label: const Text('Liste'),
+                            onPressed: () {
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                '/events',
+                                (route) => false,
+                              );
+                            },
                           ),
                         ],
                       ),
