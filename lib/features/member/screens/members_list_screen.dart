@@ -137,7 +137,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
     });
 
     if (result['success'] == true) {
-      _loadMembers();
+      _membersFuture = _loadMembers();
     }
   }
 
