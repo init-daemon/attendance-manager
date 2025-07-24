@@ -4,8 +4,14 @@ import 'package:attendance_app/features/member/models/member.dart';
 class MemberForm extends StatefulWidget {
   final Member? member;
   final Function(Member) onSave;
+  final bool isCreate;
 
-  const MemberForm({super.key, this.member, required this.onSave});
+  const MemberForm({
+    super.key,
+    this.member,
+    required this.onSave,
+    this.isCreate = true,
+  });
 
   @override
   State<MemberForm> createState() => _MemberFormState();
@@ -61,7 +67,7 @@ class _MemberFormState extends State<MemberForm> {
             title: const Text('Date de naissance (optionnel)'),
             subtitle: Text(
               _birthDate != null
-                  ? '${_birthDate!.day}/${_birthDate!.month}/${_birthDate!.year}'
+                  ? '${_birthDate!.day.toString().padLeft(2, '0')}/${_birthDate!.month.toString().padLeft(2, '0')}/${_birthDate!.year}'
                   : 'Non spécifiée',
             ),
             trailing: _birthDate != null
@@ -75,28 +81,53 @@ class _MemberFormState extends State<MemberForm> {
                   )
                 : null,
             onTap: () async {
-              final selectedDate = await showDatePicker(
-                context: context,
-                initialDate: _birthDate ?? DateTime.now(),
-                firstDate: DateTime(1900),
-                lastDate: DateTime.now(),
-              );
-              if (selectedDate != null) {
-                setState(() {
-                  _birthDate = selectedDate;
-                });
+              try {
+                final selectedDate = await showDatePicker(
+                  context: context,
+                  initialDate: _birthDate ?? DateTime.now(),
+                  firstDate: DateTime(1900),
+                  lastDate: DateTime.now(),
+                  locale: const Locale('fr', 'FR'),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: ColorScheme.light(
+                          primary: Theme.of(context).primaryColor,
+                          onPrimary: Colors.white,
+                          onSurface: Colors.black,
+                        ),
+                        textButtonTheme: TextButtonThemeData(
+                          style: TextButton.styleFrom(
+                            foregroundColor: Theme.of(context).primaryColor,
+                          ),
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                if (selectedDate != null && mounted) {
+                  setState(() {
+                    _birthDate = selectedDate;
+                  });
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Erreur: ${e.toString()}')),
+                );
               }
             },
           ),
-          SwitchListTile(
-            title: const Text('Caché'),
-            value: _isHidden,
-            onChanged: (value) {
-              setState(() {
-                _isHidden = value;
-              });
-            },
-          ),
+          if (!widget.isCreate)
+            SwitchListTile(
+              title: const Text('Mise en corbeille'),
+              value: _isHidden,
+              onChanged: (value) {
+                setState(() {
+                  _isHidden = value;
+                });
+              },
+            ),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [

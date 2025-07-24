@@ -28,14 +28,16 @@ class _MembersListScreenState extends State<MembersListScreen> {
   bool _isImporting = false;
   String? _importMessage;
   bool _showImportInfo = false;
+  int _activeMembersCount = 0;
+  int _hiddenMembersCount = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadMembers();
+    _membersFuture = _loadMembers();
   }
 
-  void _loadMembers() {
+  Future<List<Member>> _loadMembers() async {
     String? where;
     List<dynamic>? whereArgs;
 
@@ -45,62 +47,76 @@ class _MembersListScreenState extends State<MembersListScreen> {
     } else if (_hiddenFilter == 'hidden') {
       where = 'isHidden = ?';
       whereArgs = [1];
+    } else if (_hiddenFilter == 'all') {
+      where = null;
+      whereArgs = null;
     }
 
-    Future<List<Map<String, dynamic>>> future;
+    final activeCount = await DbService.count(
+      'members',
+      where: 'isHidden = ?',
+      whereArgs: [0],
+    );
+
+    final hiddenCount = await DbService.count(
+      'members',
+      where: 'isHidden = ?',
+      whereArgs: [1],
+    );
+
+    setState(() {
+      _activeMembersCount = activeCount;
+      _hiddenMembersCount = hiddenCount;
+    });
+
+    List<Member> members;
     if (_searchText.isEmpty) {
-      future = DbService.getPaged(
+      final count = await DbService.count(
+        'members',
+        where: where,
+        whereArgs: whereArgs,
+      );
+      setState(() {
+        _totalMembers = count;
+      });
+
+      final maps = await DbService.getPaged(
         tableName: 'members',
         limit: _pageSize,
         offset: _currentPage * _pageSize,
         orderBy: 'lastName ASC',
+        where: where,
+        whereArgs: whereArgs,
       );
-      if (where != null) {
-        future = future.then(
-          (list) => list.where((m) => m['isHidden'] == whereArgs![0]).toList(),
-        );
-      }
-      setState(() {
-        _membersFuture = future.then(
-          (maps) => maps.map((map) => Member.fromMap(map)).toList(),
-        );
-        DbService.count('members').then((count) {
-          setState(() {
-            _totalMembers = count;
-          });
-        });
-      });
+      members = maps.map((map) => Member.fromMap(map)).toList();
     } else {
-      future = DbService.search(
+      final maps = await DbService.search(
+        tableName: 'members',
+        query: _searchText,
+        fields: ['firstName', 'lastName'],
+        limit: 1000000,
+        offset: 0,
+        where: where,
+        whereArgs: whereArgs,
+      );
+      setState(() {
+        _totalMembers = maps.length;
+      });
+
+      final pagedMaps = await DbService.search(
         tableName: 'members',
         query: _searchText,
         fields: ['firstName', 'lastName'],
         limit: _pageSize,
         offset: _currentPage * _pageSize,
         orderBy: 'lastName ASC',
+        where: where,
+        whereArgs: whereArgs,
       );
-      if (where != null) {
-        future = future.then(
-          (list) => list.where((m) => m['isHidden'] == whereArgs![0]).toList(),
-        );
-      }
-      setState(() {
-        _membersFuture = future.then(
-          (maps) => maps.map((map) => Member.fromMap(map)).toList(),
-        );
-        DbService.search(
-          tableName: 'members',
-          query: _searchText,
-          fields: ['firstName', 'lastName'],
-          limit: 1000000,
-          offset: 0,
-        ).then((maps) {
-          setState(() {
-            _totalMembers = maps.length;
-          });
-        });
-      });
+      members = pagedMaps.map((map) => Member.fromMap(map)).toList();
     }
+
+    return members;
   }
 
   Future<void> _handleImport() async {
@@ -131,8 +147,11 @@ class _MembersListScreenState extends State<MembersListScreen> {
     });
   }
 
-  void _refreshMembers() {
-    _loadMembers();
+  Future<void> _refreshMembers() async {
+    setState(() {
+      _membersFuture = _loadMembers();
+    });
+    await _membersFuture;
   }
 
   void _navigateToCreateScreen(BuildContext context) async {
@@ -148,24 +167,26 @@ class _MembersListScreenState extends State<MembersListScreen> {
       setState(() {
         _pageSize = value;
         _currentPage = 0;
+        _membersFuture = _loadMembers();
       });
-      _loadMembers();
     }
   }
 
   void _onPageChanged(int page) {
     setState(() {
       _currentPage = page;
+      _membersFuture = _loadMembers();
     });
-    _loadMembers();
   }
 
   void _onSearchChanged(String value) {
     _debounce?.cancel();
     _searchText = value;
     _debounce = Timer(const Duration(milliseconds: 500), () {
-      _currentPage = 0;
-      _loadMembers();
+      setState(() {
+        _currentPage = 0;
+        _membersFuture = _loadMembers();
+      });
     });
   }
 
@@ -248,17 +269,20 @@ class _MembersListScreenState extends State<MembersListScreen> {
               DropdownButton<String>(
                 value: _hiddenFilter,
                 items: const [
-                  DropdownMenuItem(value: 'visible', child: Text('Non cachés')),
+                  DropdownMenuItem(
+                    value: 'visible',
+                    child: Text('Membre actif'),
+                  ),
                   DropdownMenuItem(value: 'all', child: Text('Tous')),
-                  DropdownMenuItem(value: 'hidden', child: Text('Cachés')),
+                  DropdownMenuItem(value: 'hidden', child: Text('Corbeille')),
                 ],
                 onChanged: (value) {
                   if (value != null) {
                     setState(() {
                       _hiddenFilter = value;
                       _currentPage = 0;
+                      _membersFuture = _loadMembers();
                     });
-                    _loadMembers();
                   }
                 },
               ),
@@ -354,6 +378,8 @@ class _MembersListScreenState extends State<MembersListScreen> {
 
                     _buildSearchAndPagination(),
 
+                    _buildStatsBar(),
+
                     Flexible(
                       child: Container(
                         margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -400,7 +426,9 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                 scrollDirection: Axis.vertical,
                                 child: MembersTable(
                                   members: pagedMembers,
-                                  onEdit: _refreshMembers,
+                                  onEdit: () async {
+                                    await _refreshMembers();
+                                  },
                                 ),
                               );
                             }
@@ -424,6 +452,53 @@ class _MembersListScreenState extends State<MembersListScreen> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildStatsBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceVariant,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildStatItem('Actifs', _activeMembersCount, Colors.green),
+          _buildStatItem('Corbeille', _hiddenMembersCount, Colors.orange),
+          _buildStatItem(
+            'Total',
+            _activeMembersCount + _hiddenMembersCount,
+            Theme.of(context).primaryColor,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, int count, Color color) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: Theme.of(context).textTheme.bodySmall?.color,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          count.toString(),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -112,7 +112,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('Confirmer la suppression'),
         content: const Text(
-          "Supprimer cet événement entraînera également la suppression de tous les événements organisés associés. Voulez-vous vraiment continuer ?",
+          "Supprimer ce type d'événement supprimera également tous les événements liés. Souhaitez-vous vraiment procéder ?",
         ),
         actions: [
           TextButton(

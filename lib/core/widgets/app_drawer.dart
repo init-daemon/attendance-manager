@@ -110,15 +110,15 @@ class _AppDrawerState extends State<AppDrawer> {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.event),
-            title: const Text('Événements'),
+            leading: const Icon(Icons.list),
+            title: const Text('Liste des événements'),
             onTap: () {
               Navigator.pushReplacementNamed(context, '/events');
             },
           ),
           ListTile(
-            leading: const Icon(Icons.groups),
-            title: const Text('Evénements organisés'),
+            leading: const Icon(Icons.event),
+            title: const Text('Evénements'),
             onTap: () {
               Navigator.pushReplacementNamed(context, '/event-organizations');
             },

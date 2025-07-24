@@ -126,6 +126,8 @@ class DbService {
     required int limit,
     required int offset,
     String? orderBy,
+    String? where,
+    List<dynamic>? whereArgs,
   }) async {
     final db = await _getDatabase();
     return await db.query(
@@ -133,14 +135,23 @@ class DbService {
       limit: limit,
       offset: offset,
       orderBy: orderBy,
+      where: where,
+      whereArgs: whereArgs,
     );
   }
 
-  static Future<int> count(String tableName) async {
+  static Future<int> count(
+    String tableName, {
+    String? where,
+    List<dynamic>? whereArgs,
+  }) async {
     final db = await _getDatabase();
-    final result = await db.rawQuery(
-      'SELECT COUNT(*) as count FROM $tableName',
-    );
+    final result = where == null
+        ? await db.rawQuery('SELECT COUNT(*) as count FROM $tableName')
+        : await db.rawQuery(
+            'SELECT COUNT(*) as count FROM $tableName WHERE $where',
+            whereArgs,
+          );
     return result.first['count'] as int? ?? 0;
   }
 
@@ -151,16 +162,29 @@ class DbService {
     int limit = 20,
     int offset = 0,
     String? orderBy,
+    String? where,
+    List<dynamic>? whereArgs,
   }) async {
     final db = await _getDatabase();
     final trimmedQuery = query.trim();
     final likeQuery = '%$trimmedQuery%';
-    final where = fields.map((f) => '$f LIKE ?').join(' OR ');
-    final whereArgs = List.filled(fields.length, likeQuery);
+
+    var whereClauses = fields.map((f) => '$f LIKE ?').toList();
+    var whereArgsList = List<dynamic>.filled(fields.length, likeQuery);
+
+    if (where != null) {
+      whereClauses.add(where);
+      if (whereArgs != null) {
+        whereArgsList.addAll(whereArgs);
+      }
+    }
+
+    final finalWhere = whereClauses.join(' AND ');
+
     return await db.query(
       tableName,
-      where: where,
-      whereArgs: whereArgs,
+      where: finalWhere,
+      whereArgs: whereArgsList,
       limit: limit,
       offset: offset,
       orderBy: orderBy,

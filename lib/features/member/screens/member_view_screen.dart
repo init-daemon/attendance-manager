@@ -1,3 +1,4 @@
+import 'package:attendance_app/services/date_service.dart';
 import 'package:flutter/material.dart';
 import 'package:attendance_app/features/member/models/member.dart';
 import 'package:attendance_app/features/member/widgets/profile_avatar.dart';
@@ -111,8 +112,10 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
   }
 
   bool _isInInterval(DateTime date) {
-    if (startDate != null && date.isBefore(startDate!)) return false;
-    if (endDate != null && date.isAfter(endDate!)) return false;
+    if (startDate == null || endDate == null) return true;
+
+    if (date.isBefore(startDate!)) return false;
+    if (date.isAfter(endDate!)) return false;
     return true;
   }
 
@@ -181,7 +184,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                       ),
                       _buildInfoRow(
                         'Statut',
-                        member.isHidden ? 'Caché' : 'Visible',
+                        !member.isHidden ? 'Inactif' : 'Actif',
                       ),
                       const SizedBox(height: 24),
                       Row(
@@ -248,6 +251,36 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                             ),
                         ],
                       ),
+                      if (startDate != null || endDate != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (startDate != null && endDate != null)
+                                Text(
+                                  'Filtre appliqué : Du ${DateService.formatFr(startDate!, withHour: false)} au ${DateService.formatFr(endDate!, withHour: false)}',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.color
+                                            ?.withOpacity(0.7),
+                                      ),
+                                ),
+                              if (startDate == null || endDate == null)
+                                Text(
+                                  'Veuillez définir les deux dates (début et fin) pour appliquer le filtre',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Colors.orange[700],
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                ),
+                            ],
+                          ),
+                        ),
                       const SizedBox(height: 18),
                       loading
                           ? const Center(child: CircularProgressIndicator())
@@ -340,7 +373,9 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                 stat.eventName,
                 style: const TextStyle(fontWeight: FontWeight.w500),
               ),
-              subtitle: Row(
+              subtitle: Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -352,6 +387,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.check_circle,
@@ -369,7 +405,6 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -380,6 +415,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.cancel,
@@ -397,7 +433,6 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -408,6 +443,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.group,
