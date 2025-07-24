@@ -34,16 +34,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _backupStatus = null;
     });
 
-    final status = await Permission.storage.request();
-    if (!status.isGranted) {
-      setState(() {
-        _isBackingUp = false;
-        _backupStatus = "Permission d'accès au stockage refusée.";
-      });
-      return;
-    }
-
     try {
+      if (!await _checkStoragePermissions()) {
+        setState(() {
+          _isBackingUp = false;
+          _backupStatus =
+              "Permission d'accès au stockage refusée. Veuillez autoriser l'accès dans les paramètres de l'application.";
+        });
+        return;
+      }
+
       final String? directoryPath = await FilePicker.platform.getDirectoryPath(
         dialogTitle: "Choisissez le dossier de sauvegarde",
       );
@@ -113,7 +113,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() {
         _isBackingUpToGoogleDrive = false;
         _backupStatus = drivePath != null
-            ? "Sauvegarde sur Google Drive réussie: $drivePath"
+            ? "Sauvegarde sur Google Drive réussie"
             : "Échec de la sauvegarde sur Google Drive";
       });
     } catch (e) {
@@ -196,7 +196,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (!await _checkStoragePermissions()) {
         setState(() {
           _isImporting = false;
-          _backupStatus = "Permission d'accès au stockage refusée.";
+          _backupStatus =
+              "Permission d'accès au stockage refusée. Veuillez autoriser l'accès dans les paramètres de l'application.";
         });
         return;
       }
@@ -258,15 +259,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<bool> _checkStoragePermissions() async {
-    PermissionStatus status = await Permission.storage.request();
-    if (!status.isGranted) {
-      if (await Permission.manageExternalStorage.isDenied ||
-          await Permission.manageExternalStorage.isPermanentlyDenied) {
+    if (Platform.isAndroid) {
+      //vérifier et demander MANAGE_EXTERNAL_STORAGE pour Android 11+
+      if (await Permission.manageExternalStorage.isDenied) {
         await Permission.manageExternalStorage.request();
       }
-      status = await Permission.manageExternalStorage.status;
+
+      //vérifier et demander les permissions standard pour les autres versions
+      if (await Permission.storage.isDenied) {
+        await Permission.storage.request();
+      }
+
+      //vérifier les permissions accordées
+      final manageStatus = await Permission.manageExternalStorage.status;
+      final storageStatus = await Permission.storage.status;
+
+      return manageStatus.isGranted || storageStatus.isGranted;
     }
-    return status.isGranted;
+    return true;
   }
 
   Future<bool> _validateDatabaseSchema(Database db) async {
@@ -434,6 +444,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         message.contains("réussie") ||
         message.contains("réussi") ||
         message.contains("Google Drive réussie");
+    final bool isPermissionError = message.contains("Permission");
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -445,11 +456,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
           width: 1,
         ),
       ),
-      child: Text(
-        message,
-        style: TextStyle(
-          color: isSuccess ? Colors.green[800] : Colors.red[800],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            message,
+            style: TextStyle(
+              color: isSuccess ? Colors.green[800] : Colors.red[800],
+            ),
+          ),
+          if (isPermissionError) ...[
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: _openAppSettings,
+              child: const Text('Ouvrir les paramètres'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red[800],
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -486,6 +513,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
     } on SocketException catch (_) {
       return false;
+    }
+  }
+
+  Future<void> _openAppSettings() async {
+    if (await Permission.manageExternalStorage.isPermanentlyDenied ||
+        await Permission.storage.isPermanentlyDenied) {
+      await openAppSettings();
     }
   }
 }

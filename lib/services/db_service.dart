@@ -7,12 +7,19 @@ import 'package:attendance_app/services/event_organization_table_service.dart';
 import 'package:attendance_app/services/event_participant_table_service.dart';
 
 class DbService {
-  static Future<void> initialize({bool fresh = false}) async {
+  static Future<void> initialize({
+    bool fresh = true,
+    bool onlyClear = true,
+  }) async {
     if (fresh) {
       await _deleteDatabase();
     }
 
     await _createTables();
+
+    if (onlyClear) {
+      return;
+    }
 
     await _initializeTable(
       tableName: 'members',
