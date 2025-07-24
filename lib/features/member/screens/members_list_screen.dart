@@ -47,6 +47,9 @@ class _MembersListScreenState extends State<MembersListScreen> {
     } else if (_hiddenFilter == 'hidden') {
       where = 'isHidden = ?';
       whereArgs = [1];
+    } else if (_hiddenFilter == 'all') {
+      where = null;
+      whereArgs = null;
     }
 
     final activeCount = await DbService.count(
@@ -144,8 +147,11 @@ class _MembersListScreenState extends State<MembersListScreen> {
     });
   }
 
-  void _refreshMembers() {
-    _loadMembers();
+  Future<void> _refreshMembers() async {
+    setState(() {
+      _membersFuture = _loadMembers();
+    });
+    await _membersFuture;
   }
 
   void _navigateToCreateScreen(BuildContext context) async {
@@ -275,8 +281,8 @@ class _MembersListScreenState extends State<MembersListScreen> {
                     setState(() {
                       _hiddenFilter = value;
                       _currentPage = 0;
+                      _membersFuture = _loadMembers();
                     });
-                    _loadMembers();
                   }
                 },
               ),
@@ -420,7 +426,9 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                 scrollDirection: Axis.vertical,
                                 child: MembersTable(
                                   members: pagedMembers,
-                                  onEdit: _refreshMembers,
+                                  onEdit: () async {
+                                    await _refreshMembers();
+                                  },
                                 ),
                               );
                             }

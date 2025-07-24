@@ -184,7 +184,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                       ),
                       _buildInfoRow(
                         'Statut',
-                        member.isHidden ? 'Caché' : 'Visible',
+                        !member.isHidden ? 'Inactif' : 'Actif',
                       ),
                       const SizedBox(height: 24),
                       Row(

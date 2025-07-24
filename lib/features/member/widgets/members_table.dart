@@ -6,7 +6,7 @@ import 'package:attendance_app/services/member_table_service.dart';
 
 class MembersTable extends StatelessWidget {
   final List<Member> members;
-  final VoidCallback? onEdit;
+  final Future<void> Function()? onEdit;
 
   const MembersTable({super.key, required this.members, this.onEdit});
 
@@ -19,7 +19,9 @@ class MembersTable extends StatelessWidget {
       isHidden: !member.isHidden,
     );
     await MemberTableService.update(updatedMember);
-    if (onEdit != null) onEdit!();
+    if (onEdit != null) {
+      await onEdit!();
+    }
   }
 
   Future<void> _showDeleteConfirmationDialog(
