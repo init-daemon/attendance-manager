@@ -7,9 +7,13 @@ import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Demander les permissions de stockage au démarrage
+  await _requestStoragePermissions();
 
   if (!Platform.isAndroid && !Platform.isIOS) {
     sqfliteFfiInit();
@@ -18,7 +22,7 @@ void main() async {
 
   print('Database path: ' + await getDatabasesPath());
 
-  // await DbService.initialize(fresh: true);
+  await DbService.initialize(fresh: true);
 
   FlutterError.onError = (FlutterErrorDetails details) async {
     FlutterError.presentError(details);
@@ -34,6 +38,25 @@ void main() async {
   };
 
   runApp(const PresenceManagerApp());
+}
+
+Future<void> _requestStoragePermissions() async {
+  if (Platform.isAndroid) {
+    //pour Android 13+ (API 33+)
+    if (await Permission.manageExternalStorage.isDenied) {
+      await Permission.manageExternalStorage.request();
+    }
+
+    //pour Android 10-12 (API 29-32)
+    if (await Permission.storage.isDenied) {
+      await Permission.storage.request();
+    }
+
+    //pour Android <10 (API <29)
+    if (await Permission.accessMediaLocation.isDenied) {
+      await Permission.accessMediaLocation.request();
+    }
+  }
 }
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
