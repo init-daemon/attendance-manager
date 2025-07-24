@@ -21,64 +21,69 @@ class EventOrganizationViewScreen extends StatelessWidget {
         child: Card(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                FutureBuilder(
-                  future: EventTableService.getById(eventOrganization.eventId),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8),
-                        child: LinearProgressIndicator(),
-                      );
-                    }
-                    if (snapshot.hasData && snapshot.data != null) {
-                      return _buildInfoRow('Événement', snapshot.data!.name);
-                    }
-                    return _buildInfoRow('Événement', 'Non trouvé');
-                  },
-                ),
-                _buildInfoRow(
-                  'Date',
-                  DateService.formatFrLong(eventOrganization.date),
-                ),
-                _buildInfoRow('Localisation', eventOrganization.location),
-                _buildInfoRow(
-                  'Description',
-                  eventOrganization.description ?? '',
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.edit),
-                      label: const Text('Modifier'),
-                      onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/event-organizations/edit',
-                          arguments: eventOrganization,
-                        );
-                      },
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: double.infinity),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  FutureBuilder(
+                    future: EventTableService.getById(
+                      eventOrganization.eventId,
                     ),
-                    const SizedBox(width: 12),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.list),
-                      label: const Text('Liste'),
-                      onPressed: () {
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          '/event-organizations',
-                          (route) => false,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8),
+                          child: LinearProgressIndicator(),
                         );
-                      },
-                    ),
-                  ],
-                ),
-              ],
+                      }
+                      if (snapshot.hasData && snapshot.data != null) {
+                        return _buildInfoRow('Événement', snapshot.data!.name);
+                      }
+                      return _buildInfoRow('Événement', 'Non trouvé');
+                    },
+                  ),
+                  _buildInfoRow(
+                    'Date',
+                    DateService.formatFrLong(eventOrganization.date),
+                  ),
+                  _buildInfoRow('Localisation', eventOrganization.location),
+                  _buildInfoRow(
+                    'Description',
+                    eventOrganization.description ?? '',
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.edit),
+                        label: const Text('Modifier'),
+                        onPressed: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/event-organizations/edit',
+                            arguments: eventOrganization,
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.list),
+                        label: const Text('Liste'),
+                        onPressed: () {
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/event-organizations',
+                            (route) => false,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -89,13 +94,12 @@ class EventOrganizationViewScreen extends StatelessWidget {
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '$label : ',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          Text(value),
+          Text('$label :', style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text(value, softWrap: true, overflow: TextOverflow.visible),
         ],
       ),
     );

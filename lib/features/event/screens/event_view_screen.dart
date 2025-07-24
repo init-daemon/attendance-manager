@@ -158,7 +158,7 @@ class _EventViewScreenState extends State<EventViewScreen> {
   @override
   Widget build(BuildContext context) {
     return AppLayout(
-      title: 'Détails de l\'événement',
+      title: 'Détails du type d\'événement',
       appBarActions: [
         IconButton(
           icon: const Icon(Icons.edit),
