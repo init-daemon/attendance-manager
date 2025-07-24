@@ -15,7 +15,7 @@ class EventOrganizationViewScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppLayout(
-      title: 'Détails organisation',
+      title: 'Détails de l\'événement',
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Card(

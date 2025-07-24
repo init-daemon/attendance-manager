@@ -142,7 +142,7 @@ class _EventOrganizationsListScreenState
       builder: (ctx) => AlertDialog(
         title: const Text('Confirmer la suppression'),
         content: const Text(
-          "Supprimer cette organisation d'événement entraînera également la suppression des participants associés. Voulez-vous vraiment continuer ?",
+          "Supprimer cet événement supprimera aussi les données associées. Voulez-vous vraiment continuer ?",
         ),
         actions: [
           TextButton(
@@ -190,7 +190,7 @@ class _EventOrganizationsListScreenState
   @override
   Widget build(BuildContext context) {
     return AppLayout(
-      title: 'Organisations d\'événement',
+      title: 'Evènement',
       body: Column(
         children: [
           Padding(

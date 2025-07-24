@@ -369,7 +369,7 @@ class _EventViewScreenState extends State<EventViewScreen> {
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  const Text('Événements organisés associés :'),
+                                  const Text('Événements associés :'),
                                   const Spacer(),
                                   DropdownButton<int>(
                                     value: _pageSize,
