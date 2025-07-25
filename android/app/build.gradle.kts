@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.daemon.init.attendanceapp"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973" // Modification ici
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
