@@ -88,22 +88,11 @@ class _MembersListScreenState extends State<MembersListScreen> {
         where: where,
         whereArgs: whereArgs,
       );
-      members = maps.map((map) => Member.fromMap(map)).toList();
+      members = List<Map<String, dynamic>>.from(
+        maps,
+      ).map((map) => Member.fromMap(map)).toList();
     } else {
       final maps = await DbService.search(
-        tableName: 'members',
-        query: _searchText,
-        fields: ['firstName', 'lastName'],
-        limit: 1000000,
-        offset: 0,
-        where: where,
-        whereArgs: whereArgs,
-      );
-      setState(() {
-        _totalMembers = maps.length;
-      });
-
-      final pagedMaps = await DbService.search(
         tableName: 'members',
         query: _searchText,
         fields: ['firstName', 'lastName'],
@@ -113,7 +102,24 @@ class _MembersListScreenState extends State<MembersListScreen> {
         where: where,
         whereArgs: whereArgs,
       );
-      members = pagedMaps.map((map) => Member.fromMap(map)).toList();
+
+      final totalMaps = await DbService.search(
+        tableName: 'members',
+        query: _searchText,
+        fields: ['firstName', 'lastName'],
+        limit: 1000000,
+        offset: 0,
+        where: where,
+        whereArgs: whereArgs,
+      );
+
+      setState(() {
+        _totalMembers = totalMaps.length;
+      });
+
+      members = List<Map<String, dynamic>>.from(
+        maps,
+      ).map((map) => Member.fromMap(map)).toList();
     }
 
     return members;
