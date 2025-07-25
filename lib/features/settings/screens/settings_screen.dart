@@ -216,6 +216,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
 
       final String importPath = result.files.single.path!;
+
+      await DbService.forceCloseDatabase();
+
+      await Future.delayed(const Duration(milliseconds: 500));
+
       final String backupPath = await _autoBackupBeforeImport();
       if (backupPath.isNotEmpty) {
         _backupStatus = "Sauvegarde automatique effectuée : $backupPath";
@@ -238,18 +243,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
 
       final appDbPath = await DbService.getDatabasePath();
+
       try {
         await deleteDatabase(appDbPath);
       } catch (e) {
-        developer.log('Erreur suppression ancienne base : $e');
+        try {
+          final file = File(appDbPath);
+          if (await file.exists()) {
+            await file.delete();
+          }
+        } catch (e) {
+          setState(() {
+            _isImporting = false;
+            _backupStatus =
+                "Impossible de supprimer l'ancienne base de données. Fermez l'application et réessayez.";
+          });
+          return;
+        }
       }
-      await File(importPath).copy(appDbPath);
 
-      setState(() {
-        _isImporting = false;
-        _backupStatus =
-            "Importation réussie ! La base de données a été remplacée.";
-      });
+      try {
+        final importFile = File(importPath);
+        await importFile.copy(appDbPath);
+
+        await DbService.getDatabase();
+
+        setState(() {
+          _isImporting = false;
+          _backupStatus =
+              "Importation réussie ! La base de données a été remplacée.";
+        });
+      } catch (e) {
+        setState(() {
+          _isImporting = false;
+          _backupStatus = "Erreur lors de la copie du fichier : $e";
+        });
+      }
     } catch (e) {
       setState(() {
         _isImporting = false;

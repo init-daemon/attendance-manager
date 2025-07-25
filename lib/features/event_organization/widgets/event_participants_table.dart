@@ -20,6 +20,7 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
   @override
   void initState() {
     super.initState();
+
     _refresh();
   }
 
@@ -46,29 +47,23 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
     final selectedIds = existingParticipants.map((p) => p.individualId).toSet();
 
     Future<void> loadMembers() async {
-      if (searchText.trim().isEmpty) {
-        members = await DbService.getPaged(
-          tableName: 'members',
-          limit: pageSize,
-          offset: currentPage * pageSize,
-          orderBy: 'lastName ASC',
-        );
-        members = members
-            .where((m) => m['isHidden'] == 0 && !selectedIds.contains(m['id']))
-            .toList();
-      } else {
-        members = await DbService.search(
-          tableName: 'members',
-          query: searchText,
-          fields: ['firstName', 'lastName'],
-          limit: pageSize,
-          offset: currentPage * pageSize,
-          orderBy: 'lastName ASC',
-        );
-        members = members
-            .where((m) => m['isHidden'] == 0 && !selectedIds.contains(m['id']))
-            .toList();
-      }
+      final whereArgs = [widget.eventOrganizationId];
+
+      final query =
+          '''
+            SELECT m.* FROM members m
+            WHERE m.isHidden = 0
+            AND NOT EXISTS (
+              SELECT 1 FROM event_participants ep
+              WHERE ep.individual_id = m.id
+              AND ep.event_organization_id = ?
+            )
+            ${searchText.trim().isNotEmpty ? "AND (m.firstName LIKE '%$searchText%' OR m.lastName LIKE '%$searchText%')" : ""}
+            ORDER BY m.lastName ASC
+            LIMIT $pageSize OFFSET ${currentPage * pageSize}
+          ''';
+
+      members = await DbService.rawQuery(query, whereArgs);
     }
 
     await loadMembers();
