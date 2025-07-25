@@ -178,35 +178,33 @@ class MemberTableService {
           DateTime? birthDate;
 
           if (row.length >= 3) {
-            final dateValue = row[2]?.value;
+            final dateValue = (row[2]?.value.toString() ?? '').trim();
 
-            if (dateValue != null) {
-              if (dateValue is DateTime) {
-                birthDate = dateValue;
-              } else {
-                final dateStr = dateValue.toString().trim();
-                if (dateStr.isNotEmpty) {
-                  try {
-                    birthDate = DateTime.tryParse(dateStr);
+            if (dateValue is DateTime) {
+              birthDate = DateTime.tryParse(dateValue);
+            } else {
+              final dateStr = dateValue.toString().trim();
+              if (dateStr.isNotEmpty) {
+                try {
+                  birthDate = DateTime.tryParse(dateStr);
 
-                    if (birthDate == null) {
-                      final formats = [
-                        'yyyy-MM-ddTHH:mm:ss',
-                        'yyyy-MM-dd',
-                        'dd/MM/yyyy',
-                        'yyyy/MM/dd',
-                      ];
+                  if (birthDate == null) {
+                    final formats = [
+                      'yyyy-MM-ddTHH:mm:ss',
+                      'yyyy-MM-dd',
+                      'dd/MM/yyyy',
+                      'yyyy/MM/dd',
+                    ];
 
-                      for (final format in formats) {
-                        try {
-                          birthDate = DateFormat(format).parse(dateStr);
-                          break;
-                        } catch (_) {}
-                      }
+                    for (final format in formats) {
+                      try {
+                        birthDate = DateFormat(format).parse(dateStr);
+                        break;
+                      } catch (_) {}
                     }
-                  } catch (e) {
-                    debugPrint('Date parsing error: $e');
                   }
+                } catch (e) {
+                  debugPrint('Date parsing error: $e');
                 }
               }
             }
