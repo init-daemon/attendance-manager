@@ -28,18 +28,28 @@ class EventParticipantTableService {
   }
 
   static Future<List<EventParticipant>> getByEventOrganizationId(
-    String eventOrganizationId,
-  ) async {
+    String eventOrganizationId, {
+    bool includeHidden = true,
+  }) async {
     final db = await AppDbService.database;
+
+    final whereClause = includeHidden
+        ? 'WHERE ep.event_organization_id = ?'
+        : '''
+         WHERE ep.event_organization_id = ?
+           AND (m.isHidden IS NULL OR m.isHidden = 0)
+         ''';
+
     final result = await db.rawQuery(
       '''
-      SELECT ep.*, m.isHidden
-      FROM event_participants ep
-      JOIN members m ON ep.individual_id = m.id
-      WHERE ep.event_organization_id = ?
+    SELECT ep.*, m.isHidden
+    FROM event_participants ep
+    JOIN members m ON ep.individual_id = m.id
+    $whereClause
     ''',
       [eventOrganizationId],
     );
+
     return result.map((map) => EventParticipant.fromMap(map)).toList();
   }
 
