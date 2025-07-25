@@ -174,24 +174,27 @@ class DbService {
   }) async {
     final db = await _getDatabase();
     final trimmedQuery = query.trim();
-    final likeQuery = '%$trimmedQuery%';
 
-    var whereClauses = fields.map((f) => '$f LIKE ?').toList();
-    var whereArgsList = List<dynamic>.filled(fields.length, likeQuery);
+    final searchConditions = fields
+        .map((field) => '$field LIKE ?')
+        .join(' OR ');
+    final searchArgs = fields.map((_) => '%$trimmedQuery%').toList();
+
+    String finalWhere;
+    List<dynamic> finalArgs;
 
     if (where != null) {
-      whereClauses.add(where);
-      if (whereArgs != null) {
-        whereArgsList.addAll(whereArgs);
-      }
+      finalWhere = '($searchConditions) AND ($where)';
+      finalArgs = [...searchArgs, ...?whereArgs];
+    } else {
+      finalWhere = searchConditions;
+      finalArgs = searchArgs;
     }
-
-    final finalWhere = whereClauses.join(' AND ');
 
     return await db.query(
       tableName,
       where: finalWhere,
-      whereArgs: whereArgsList,
+      whereArgs: finalArgs,
       limit: limit,
       offset: offset,
       orderBy: orderBy,
