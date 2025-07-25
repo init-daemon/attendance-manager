@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:attendance_app/features/event_organization/models/event_organization.dart';
 import 'package:attendance_app/services/date_service.dart';
+import 'package:attendance_app/services/event_participant_table_service.dart'; // Ajouté
 
 class EventOrganizationForm extends StatefulWidget {
   final EventOrganization? eventOrganization;
@@ -131,6 +132,12 @@ class _EventOrganizationFormState extends State<EventOrganizationForm> {
                       );
                       final savedId = await widget.onSave(org);
                       final eventOrgId = savedId ?? org.id;
+
+                      await EventParticipantTableService.copyParticipantsFromPreviousEvent(
+                        newEventOrganizationId: eventOrgId,
+                        eventId: widget.eventId,
+                      );
+
                       Navigator.pushNamed(
                         context,
                         '/event-organization/participants',
