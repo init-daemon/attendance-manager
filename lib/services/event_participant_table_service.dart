@@ -111,4 +111,42 @@ class EventParticipantTableService {
     }
     return true;
   }
+
+  static Future<void> copyParticipantsFromPreviousEvent({
+    required String newEventOrganizationId,
+    required String eventId,
+  }) async {
+    final db = await AppDbService.database;
+
+    final previousOrganizations = await db.query(
+      'event_organizations',
+      where: 'event_id = ?',
+      whereArgs: [eventId],
+      orderBy: 'date DESC',
+      limit: 1,
+    );
+
+    if (previousOrganizations.isEmpty) return;
+
+    final previousOrganizationId = previousOrganizations.first['id'] as String;
+
+    final previousParticipants = await db.rawQuery(
+      '''
+      SELECT ep.individual_id
+      FROM event_participants ep
+      JOIN members m ON ep.individual_id = m.id
+      WHERE ep.event_organization_id = ? AND m.isHidden = 0
+    ''',
+      [previousOrganizationId],
+    );
+
+    for (final participant in previousParticipants) {
+      final newParticipant = EventParticipant(
+        eventOrganizationId: newEventOrganizationId,
+        individualId: participant['individual_id'] as String,
+        isPresent: false,
+      );
+      await insert(newParticipant);
+    }
+  }
 }
