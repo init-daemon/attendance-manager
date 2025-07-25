@@ -5,8 +5,11 @@ import 'package:attendance_app/services/member_table_service.dart';
 import 'package:attendance_app/services/event_table_service.dart';
 import 'package:attendance_app/services/event_organization_table_service.dart';
 import 'package:attendance_app/services/event_participant_table_service.dart';
+import 'dart:developer' as developer;
 
 class DbService {
+  static Database? _database;
+
   static Future<void> initialize({
     bool fresh = true,
     bool onlyClear = true,
@@ -104,7 +107,11 @@ class DbService {
   }
 
   static Future<Database> getDatabase() async {
-    return await _getDatabase();
+    if (_database != null && _database!.isOpen) {
+      return _database!;
+    }
+    _database = await _getDatabase();
+    return _database!;
   }
 
   static Future<Database> _getDatabase() async {
@@ -228,5 +235,33 @@ class DbService {
   ) async {
     final db = await _getDatabase();
     return await db.rawQuery(query, args);
+  }
+
+  static Future<void> closeDatabase() async {
+    if (_database != null && _database!.isOpen) {
+      await _database!.close();
+    }
+    _database = null;
+  }
+
+  static Future<void> forceCloseDatabase() async {
+    try {
+      if (_database != null && _database!.isOpen) {
+        await _database!.close();
+      }
+      _database = null;
+
+      try {
+        final databasesPath = await getDatabasesPath();
+        final dbFile = File(join(databasesPath, 'app.db'));
+        if (await dbFile.exists()) {
+          await dbFile.delete();
+        }
+      } catch (e) {
+        developer.log('Error deleting database file: $e');
+      }
+    } catch (e) {
+      developer.log('Error forcing database close: $e');
+    }
   }
 }
