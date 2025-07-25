@@ -5,7 +5,6 @@ import 'package:attendance_app/services/db_service.dart';
 import 'package:attendance_app/core/utils/logger.dart';
 import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -20,9 +19,7 @@ void main() async {
     databaseFactory = databaseFactoryFfi;
   }
 
-  print('Database path: ' + await getDatabasesPath());
-
-  await DbService.initialize(fresh: true);
+  await DbService.initialize(fresh: false, onlyClear: true);
 
   FlutterError.onError = (FlutterErrorDetails details) async {
     FlutterError.presentError(details);
@@ -42,17 +39,12 @@ void main() async {
 
 Future<void> _requestStoragePermissions() async {
   if (Platform.isAndroid) {
-    //pour Android 13+ (API 33+)
     if (await Permission.manageExternalStorage.isDenied) {
       await Permission.manageExternalStorage.request();
     }
-
-    //pour Android 10-12 (API 29-32)
     if (await Permission.storage.isDenied) {
       await Permission.storage.request();
     }
-
-    //pour Android <10 (API <29)
     if (await Permission.accessMediaLocation.isDenied) {
       await Permission.accessMediaLocation.request();
     }
