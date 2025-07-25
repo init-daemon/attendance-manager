@@ -221,4 +221,12 @@ class DbService {
   static Future<String> getDatabasePath() async {
     return join(await getDatabasesPath(), 'app.db');
   }
+
+  static Future<List<Map<String, dynamic>>> rawQuery(
+    String query,
+    List<dynamic>? args,
+  ) async {
+    final db = await _getDatabase();
+    return await db.rawQuery(query, args);
+  }
 }
