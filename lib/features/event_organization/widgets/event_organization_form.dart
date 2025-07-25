@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:attendance_app/features/event_organization/models/event_organization.dart';
 import 'package:attendance_app/services/date_service.dart';
-import 'package:attendance_app/services/event_participant_table_service.dart'; // Ajouté
+import 'package:attendance_app/services/event_participant_table_service.dart';
 
 class EventOrganizationForm extends StatefulWidget {
   final EventOrganization? eventOrganization;

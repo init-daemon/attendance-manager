@@ -118,35 +118,43 @@ class EventParticipantTableService {
   }) async {
     final db = await AppDbService.database;
 
-    final previousOrganizations = await db.query(
-      'event_organizations',
-      where: 'event_id = ?',
-      whereArgs: [eventId],
-      orderBy: 'date DESC',
-      limit: 1,
-    );
-
-    if (previousOrganizations.isEmpty) return;
-
-    final previousOrganizationId = previousOrganizations.first['id'] as String;
-
-    final previousParticipants = await db.rawQuery(
-      '''
-      SELECT ep.individual_id
-      FROM event_participants ep
-      JOIN members m ON ep.individual_id = m.id
-      WHERE ep.event_organization_id = ? AND m.isHidden = 0
-    ''',
-      [previousOrganizationId],
-    );
-
-    for (final participant in previousParticipants) {
-      final newParticipant = EventParticipant(
-        eventOrganizationId: newEventOrganizationId,
-        individualId: participant['individual_id'] as String,
-        isPresent: false,
+    try {
+      final previousOrganizations = await db.query(
+        'event_organizations',
+        where: 'event_id = ? AND id != ?',
+        whereArgs: [eventId, newEventOrganizationId],
+        orderBy: 'date DESC',
       );
-      await insert(newParticipant);
+
+      final previousOrganizationId =
+          previousOrganizations.first['id'] as String;
+
+      final previousParticipants = await db.query(
+        'event_participants',
+        where: 'event_organization_id = ?',
+        whereArgs: [previousOrganizationId],
+      );
+
+      for (final participant in previousParticipants) {
+        final memberId = participant['individual_id'] as String;
+        final member = await db.query(
+          'members',
+          where: 'id = ? AND isHidden = 0',
+          whereArgs: [memberId],
+          limit: 1,
+        );
+
+        if (member.isNotEmpty) {
+          final newParticipant = EventParticipant(
+            eventOrganizationId: newEventOrganizationId,
+            individualId: memberId,
+            isPresent: false,
+          );
+          await insert(newParticipant);
+        }
+      }
+    } catch (e) {
+      //
     }
   }
 }
