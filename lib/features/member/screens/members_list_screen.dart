@@ -280,11 +280,18 @@ class _MembersListScreenState extends State<MembersListScreen> {
                 items: const [
                   DropdownMenuItem(
                     value: 'visible',
-                    child: Text('Membre actif'),
+                    child: Text('Membres actifs'),
                   ),
-                  DropdownMenuItem(value: 'all', child: Text('Tous')),
-                  DropdownMenuItem(value: 'hidden', child: Text('Corbeille')),
+                  DropdownMenuItem(
+                    value: 'all',
+                    child: Text('Tous les membres'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'hidden',
+                    child: Text('Membres inactifs'),
+                  ),
                 ],
+
                 onChanged: (value) {
                   if (value != null) {
                     setState(() {
@@ -476,7 +483,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildStatItem('Actifs', _activeMembersCount, Colors.green),
-          _buildStatItem('Corbeille', _hiddenMembersCount, Colors.orange),
+          _buildStatItem('Inactifs', _hiddenMembersCount, Colors.orange),
           _buildStatItem(
             'Total',
             _activeMembersCount + _hiddenMembersCount,
