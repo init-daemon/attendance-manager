@@ -1,4 +1,3 @@
-import 'package:attendance_app/services/date_service.dart';
 import 'package:flutter/material.dart';
 import 'package:attendance_app/features/event_organization/models/event_participant.dart';
 import 'package:attendance_app/services/event_participant_table_service.dart';
@@ -17,56 +16,24 @@ class EventParticipantsTable extends StatefulWidget {
 
 class _EventParticipantsTableState extends State<EventParticipantsTable> {
   late Future<List<EventParticipant>> _participantsFuture;
-  DateTime? _eventDate;
-  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _initializeData();
-  }
 
-  Future<void> _initializeData() async {
-    try {
-      final db = await AppDbService.database;
-      final eventOrg = await db.query(
-        'event_organizations',
-        where: 'id = ?',
-        whereArgs: [widget.eventOrganizationId],
-        limit: 1,
-      );
-
-      if (eventOrg.isNotEmpty) {
-        _eventDate = DateTime.parse(eventOrg.first['date'] as String);
-        _refresh();
-      } else {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+    _refresh();
   }
 
   void _refresh() {
-    if (_eventDate == null) return;
-
     setState(() {
-      _isLoading = true;
       _participantsFuture =
           EventParticipantTableService.getByEventOrganizationId(
             widget.eventOrganizationId,
-            eventDate: _eventDate!,
-          ).whenComplete(() => setState(() => _isLoading = false));
+          );
     });
   }
 
   void _addParticipant() async {
-    if (_eventDate == null) return;
-
     String? selectedId;
     int pageSize = 10;
     int currentPage = 0;
@@ -84,23 +51,19 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
 
       final query =
           '''
-        SELECT m.* FROM members m
-        WHERE (m.isHidden = 0 OR 
-              (m.isHidden = 1 AND (m.hiddenAt IS NULL OR m.hiddenAt > ?)))
-        AND NOT EXISTS (
-          SELECT 1 FROM event_participants ep
-          WHERE ep.individual_id = m.id
-          AND ep.event_organization_id = ?
-        )
-        ${searchText.trim().isNotEmpty ? "AND (m.firstName LIKE '%$searchText%' OR m.lastName LIKE '%$searchText%')" : ""}
-        ORDER BY m.lastName ASC
-        LIMIT $pageSize OFFSET ${currentPage * pageSize}
-      ''';
+            SELECT m.* FROM members m
+            WHERE m.isHidden = 0
+            AND NOT EXISTS (
+              SELECT 1 FROM event_participants ep
+              WHERE ep.individual_id = m.id
+              AND ep.event_organization_id = ?
+            )
+            ${searchText.trim().isNotEmpty ? "AND (m.firstName LIKE '%$searchText%' OR m.lastName LIKE '%$searchText%')" : ""}
+            ORDER BY m.lastName ASC
+            LIMIT $pageSize OFFSET ${currentPage * pageSize}
+          ''';
 
-      members = await DbService.rawQuery(query, [
-        _eventDate!.toIso8601String(),
-        ...whereArgs,
-      ]);
+      members = await DbService.rawQuery(query, whereArgs);
     }
 
     await loadMembers();
@@ -218,43 +181,12 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
   }
 
   void _removeParticipant(EventParticipant participant) async {
-    final member = await DbService.getByField(
-      tableName: 'members',
-      field: 'id',
-      value: participant.individualId,
-    );
-
-    if (member.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Ce membre n\'existe plus')));
-      return;
-    }
-
-    final isHidden = member.first['isHidden'] == 1;
-    final hiddenAt = member.first['hiddenAt'] != null
-        ? DateTime.parse(member.first['hiddenAt'] as String)
-        : null;
-
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirmation'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Voulez-vous vraiment supprimer ce participant de l\'événement ?',
-            ),
-            if (isHidden && hiddenAt != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Ce membre a été supprimé le ${DateService.formatFr(hiddenAt, withHour: false)}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
-          ],
+        content: const Text(
+          'Voulez-vous vraiment supprimer ce participant de l\'événement ?',
         ),
         actions: [
           TextButton(
@@ -268,7 +200,6 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
         ],
       ),
     );
-
     if (confirm == true) {
       await EventParticipantTableService.delete(
         participant.eventOrganizationId,
@@ -288,45 +219,21 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
     final db = await AppDbService.database;
     final result = await db.query(
       'members',
-      columns: ['firstName', 'lastName', 'isHidden', 'hiddenAt'],
+      columns: ['firstName', 'lastName'],
       where: 'id = ?',
       whereArgs: [memberId],
       limit: 1,
     );
-
     if (result.isNotEmpty) {
       final prenom = result.first['firstName'] ?? '';
       final nom = result.first['lastName'] ?? '';
-      final isHidden = result.first['isHidden'] == 1;
-      final hiddenAt = result.first['hiddenAt'] != null
-          ? DateTime.tryParse(result.first['hiddenAt'] as String)
-          : null;
-
-      String name = '$prenom $nom'.trim();
-      if (isHidden && hiddenAt != null) {
-        name +=
-            ' (Supprimé ${DateService.formatFr(hiddenAt, withHour: false)})';
-      } else if (isHidden) {
-        name += ' (Supprimé)';
-      }
-
-      return name;
+      return '$prenom $nom'.trim();
     }
     return memberId;
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading && _eventDate == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_eventDate == null) {
-      return const Center(
-        child: Text('Impossible de charger les données de l\'événement'),
-      );
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -349,20 +256,16 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
           child: FutureBuilder<List<EventParticipant>>(
             future: _participantsFuture,
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+              if (!snapshot.hasData) {
+                return const Center(child: LinearProgressIndicator());
               }
-
-              if (snapshot.hasError) {
-                return Center(child: Text('Erreur: ${snapshot.error}'));
-              }
-
-              final participants = snapshot.data ?? [];
-
-              if (participants.isEmpty) {
+              final participants = snapshot.data!;
+              final visibleParticipants = participants
+                  .where((p) => p.isHidden == false)
+                  .toList();
+              if (visibleParticipants.isEmpty) {
                 return const Center(child: Text('Aucun participant'));
               }
-
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: SingleChildScrollView(
@@ -378,7 +281,7 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
                         DataColumn(label: Text('Présent')),
                         DataColumn(label: Text('Actions')),
                       ],
-                      rows: participants.map((p) {
+                      rows: visibleParticipants.map((p) {
                         return DataRow(
                           cells: [
                             DataCell(
@@ -393,17 +296,7 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
                                       child: LinearProgressIndicator(),
                                     );
                                   }
-                                  return Text(
-                                    snap.data ?? p.individualId,
-                                    style: p.isHidden
-                                        ? TextStyle(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.error,
-                                            fontStyle: FontStyle.italic,
-                                          )
-                                        : null,
-                                  );
+                                  return Text(snap.data ?? p.individualId);
                                 },
                               ),
                             ),
