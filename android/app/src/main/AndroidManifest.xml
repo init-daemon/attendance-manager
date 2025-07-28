@@ -18,7 +18,7 @@
 
 
     <application
-        android:label="Attendance App"
+        android:label="Akon'i Lotera-Morarano"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

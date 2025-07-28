@@ -17,6 +17,7 @@ class MembersTable extends StatelessWidget {
       lastName: member.lastName,
       birthDate: member.birthDate,
       isHidden: !member.isHidden,
+      hiddenAt: !member.isHidden ? DateTime.now() : null,
     );
     await MemberTableService.update(updatedMember);
     if (onEdit != null) {
@@ -44,6 +45,13 @@ class MembersTable extends StatelessWidget {
                       ? 'Voulez-vous vraiment restaurer ce membre ?'
                       : 'Voulez-vous vraiment supprimer ce membre ?',
                 ),
+                if (member.isHidden && member.hiddenAt != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Supprimé le: ${DateService.formatFr(member.hiddenAt!, withHour: true)}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
               ],
             ),
           ),
@@ -57,7 +65,7 @@ class MembersTable extends StatelessWidget {
             TextButton(
               child: Text(
                 member.isHidden ? 'Restaurer' : 'Supprimer',
-                style: TextStyle(color: Colors.red),
+                style: const TextStyle(color: Colors.red),
               ),
               onPressed: () async {
                 Navigator.of(context).pop();

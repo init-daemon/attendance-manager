@@ -17,7 +17,8 @@ class MemberTableService {
         firstName TEXT,
         lastName TEXT,
         birthDate TEXT,
-        isHidden INTEGER
+        isHidden INTEGER,
+        hiddenAt TEXT
       )
     ''');
   }
@@ -80,6 +81,7 @@ class MemberTableService {
       {'name': 'lastName', 'type': 'TEXT'},
       {'name': 'birthDate', 'type': 'TEXT'},
       {'name': 'isHidden', 'type': 'INTEGER'},
+      {'name': 'hiddenAt', 'type': 'TEXT'},
     ];
     final info = await db.rawQuery("PRAGMA table_info(members)");
     if (info.length != expected.length) return false;
@@ -216,6 +218,7 @@ class MemberTableService {
             lastName: lastName,
             birthDate: birthDate,
             isHidden: false,
+            hiddenAt: null,
           ).toMap();
 
           await db.insert('members', memberMap);
