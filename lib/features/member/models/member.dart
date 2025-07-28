@@ -7,7 +7,6 @@ class Member {
   String lastName;
   DateTime? birthDate;
   bool isHidden;
-  DateTime? hiddenAt;
 
   Member({
     required this.id,
@@ -15,7 +14,6 @@ class Member {
     required this.lastName,
     this.birthDate,
     this.isHidden = false,
-    this.hiddenAt,
   });
 
   String get initials {
@@ -31,13 +29,11 @@ class Member {
       'lastName': lastName,
       'birthDate': birthDate?.toIso8601String(),
       'isHidden': isHidden ? 1 : 0,
-      'hiddenAt': hiddenAt?.toIso8601String(),
     };
   }
 
   factory Member.fromMap(Map<String, dynamic> map) {
     DateTime? birthDate;
-    DateTime? hiddenAt;
 
     if (map['birthDate'] != null) {
       if (map['birthDate'] is String) {
@@ -48,21 +44,12 @@ class Member {
       }
     }
 
-    if (map['hiddenAt'] != null) {
-      if (map['hiddenAt'] is String) {
-        hiddenAt = DateTime.tryParse(map['hiddenAt']);
-      } else if (map['hiddenAt'] is DateTime) {
-        hiddenAt = map['hiddenAt'];
-      }
-    }
-
     return Member(
       id: map['id'],
       firstName: map['firstName'],
       lastName: map['lastName'],
       birthDate: birthDate,
       isHidden: map['isHidden'] == 1,
-      hiddenAt: hiddenAt,
     );
   }
 

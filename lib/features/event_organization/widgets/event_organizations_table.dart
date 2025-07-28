@@ -111,7 +111,7 @@ class EventOrganizationsTable extends StatelessWidget {
                     future:
                         EventParticipantTableService.getByEventOrganizationId(
                           org.id,
-                          includeHidden: true,
+                          includeHidden: false,
                         ),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {

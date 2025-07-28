@@ -65,7 +65,7 @@ class PresenceManagerApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [Locale('fr', 'FR')],
-      title: 'Akon\'i Lotera-Morarano',
+      title: 'Attendance App',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,

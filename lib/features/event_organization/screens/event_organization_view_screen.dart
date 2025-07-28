@@ -143,7 +143,7 @@ class _EventOrganizationViewScreenState
                         future:
                             EventParticipantTableService.getByEventOrganizationId(
                               widget.eventOrganization.id,
-                              includeHidden: true,
+                              includeHidden: false,
                             ),
                         builder: (context, participantsSnapshot) {
                           if (participantsSnapshot.connectionState ==
