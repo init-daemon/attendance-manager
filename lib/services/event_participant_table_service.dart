@@ -29,28 +29,35 @@ class EventParticipantTableService {
 
   static Future<List<EventParticipant>> getByEventOrganizationId(
     String eventOrganizationId, {
-    bool includeHidden = true,
+    bool includeHidden = false,
+    DateTime? eventDate,
   }) async {
     final db = await AppDbService.database;
 
-    final whereClause = includeHidden
-        ? 'WHERE ep.event_organization_id = ?'
-        : '''
-         WHERE ep.event_organization_id = ?
-           AND (m.isHidden IS NULL OR m.isHidden = 0)
-         ''';
+    String query = '''
+      SELECT ep.*, m.isHidden, m.hiddenAt
+      FROM event_participants ep
+      LEFT JOIN members m ON ep.individual_id = m.id
+      WHERE ep.event_organization_id = ?
+    ''';
 
-    final result = await db.rawQuery(
-      '''
-    SELECT ep.*, m.isHidden
-    FROM event_participants ep
-    JOIN members m ON ep.individual_id = m.id
-    $whereClause
-    ''',
-      [eventOrganizationId],
-    );
+    List<dynamic> args = [eventOrganizationId];
 
-    return result.map((map) => EventParticipant.fromMap(map)).toList();
+    if (!includeHidden) {
+      query += '''
+        AND (m.isHidden = 0 OR
+            (m.isHidden = 1 AND (m.hiddenAt IS NULL OR m.hiddenAt > ?)))
+      ''';
+      args.add(
+        eventDate?.toIso8601String() ?? DateTime.now().toIso8601String(),
+      );
+    }
+
+    final List<Map<String, dynamic>> maps = await db.rawQuery(query, args);
+
+    return List.generate(maps.length, (i) {
+      return EventParticipant.fromMap(maps[i]);
+    });
   }
 
   static Future<int> update(EventParticipant participant) async {

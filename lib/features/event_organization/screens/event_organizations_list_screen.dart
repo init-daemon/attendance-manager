@@ -190,7 +190,7 @@ class _EventOrganizationsListScreenState
   @override
   Widget build(BuildContext context) {
     return AppLayout(
-      title: 'Evènement',
+      title: 'Evénement',
       body: Column(
         children: [
           Padding(
