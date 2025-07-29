@@ -28,6 +28,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isBackingUpToGoogleDrive = false;
   bool _isRestoringFromGoogleDrive = false;
 
+  Future<bool?> _showRestoreConfirmationDialog() async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Attention', style: TextStyle(color: Colors.red)),
+          content: const Text(
+            'La restauration des données écrasera les données existantes. '
+            'Veuillez d\'abord sauvegarder les données existantes avant de poursuivre la restauration.',
+          ),
+          actions: <Widget>[
+            ElevatedButton.icon(
+              icon: const Icon(Icons.save, color: Colors.white),
+              label: const Text('Sauvegarder la base de données'),
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.blue,
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+                _backupDatabase();
+              },
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.upload, color: Colors.white),
+              label: const Text('Importer une base de données'),
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.orange,
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.cancel, color: Colors.white),
+              label: const Text('Annuler'),
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.grey,
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(null);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _backupDatabase() async {
     setState(() {
       _isBackingUp = true;
@@ -125,6 +178,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _restoreFromGoogleDrive() async {
+    final bool? proceedWithRestore = await _showRestoreConfirmationDialog();
+    if (proceedWithRestore != true) return;
+
     setState(() {
       _isRestoringFromGoogleDrive = true;
       _backupStatus = null;
@@ -187,6 +243,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _importDatabase() async {
+    final bool? proceedWithImport = await _showRestoreConfirmationDialog();
+    if (proceedWithImport != true) return;
+
     setState(() {
       _isImporting = true;
       _backupStatus = null;
