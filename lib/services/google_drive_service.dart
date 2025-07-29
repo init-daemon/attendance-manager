@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
@@ -14,17 +15,18 @@ class GoogleDriveService {
     scopes: [drive.DriveApi.driveFileScope],
   );
 
-  static Future<String?> backupFileToDrive(String filePath) async {
+  static Future<String?> backupFileToDrive(
+    String filePath, {
+    String? fileName,
+  }) async {
     try {
       try {
         final result = await InternetAddress.lookup('google.com');
         if (result.isEmpty || result[0].rawAddress.isEmpty) {
-          debugPrint('Pas de connexion internet');
-          return null;
+          return 'Erreur: Pas de connexion internet';
         }
       } on SocketException catch (_) {
-        debugPrint('Pas de connexion internet');
-        return null;
+        return 'Erreur: Pas de connexion internet';
       }
 
       if (_driveApi == null) {
@@ -36,15 +38,17 @@ class GoogleDriveService {
       final File file = File(filePath);
 
       if (!await file.exists()) {
-        debugPrint('Fichier à sauvegarder introuvable');
-        return null;
+        return 'Erreur: Fichier introuvable';
       }
 
-      final String fileName =
-          'attendance_backup_${DateTime.now().toIso8601String()}.db';
+      final String finalFileName =
+          fileName ??
+          'attendance_app_db_${DateFormat('dd-MM-yyyy_HH:mm').format(DateTime.now())}.db';
+
       final drive.File fileMetadata = drive.File()
-        ..name = fileName
-        ..parents = [folderId];
+        ..name = finalFileName
+        ..parents = [folderId]
+        ..description = 'Sauvegarde ${DateTime.now().toString()}';
 
       final drive.File uploadedFile = await _driveApi!.files.create(
         fileMetadata,
@@ -54,9 +58,6 @@ class GoogleDriveService {
       return uploadedFile.id;
     } catch (e) {
       debugPrint('Erreur Google Drive: $e');
-      if (e is SocketException || e.toString().contains('SocketException')) {
-        return 'Erreur de connexion - Vérifiez votre accès internet';
-      }
       return null;
     }
   }
@@ -65,22 +66,17 @@ class GoogleDriveService {
     try {
       if (_driveApi == null) {
         await _initializeDriveApi();
-        if (_driveApi == null) {
-          debugPrint('Erreur: Impossible d\'initialiser Google Drive API');
-          return null;
-        }
+        if (_driveApi == null) return null;
       }
 
       final String folderId = await _getOrCreateBackupFolder();
-
       final files = await _driveApi!.files.list(
         q: "'$folderId' in parents and mimeType != 'application/vnd.google-apps.folder' and trashed = false",
         orderBy: 'createdTime desc',
       );
 
       if (files.files == null || files.files!.isEmpty) {
-        debugPrint('Aucun fichier de sauvegarde trouvé');
-        return null;
+        return 'Aucune sauvegarde disponible';
       }
 
       final recentFiles = files.files!.take(5).toList();
@@ -131,10 +127,9 @@ class GoogleDriveService {
       await media.stream.pipe(sink);
       await sink.close();
 
-      debugPrint('Fichier téléchargé avec succès: $tempPath');
       return tempPath;
     } catch (e) {
-      debugPrint('Erreur lors de la restauration depuis Google Drive: $e');
+      debugPrint('Erreur restauration Google Drive: $e');
       return null;
     }
   }

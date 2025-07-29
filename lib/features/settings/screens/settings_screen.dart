@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:attendance_app/core/widgets/app_layout.dart';
 import 'package:attendance_app/services/db_service.dart';
 import 'dart:io';
+import 'dart:math';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
@@ -13,6 +13,7 @@ import 'package:attendance_app/services/event_organization_table_service.dart';
 import 'package:attendance_app/services/event_participant_table_service.dart';
 import 'dart:developer' as developer;
 import 'package:attendance_app/services/google_drive_service.dart';
+import 'package:intl/intl.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -27,6 +28,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isImporting = false;
   bool _isBackingUpToGoogleDrive = false;
   bool _isRestoringFromGoogleDrive = false;
+
+  Future<Directory> _getAppBackupDirectory() async {
+    Directory directory;
+    if (Platform.isAndroid) {
+      directory = Directory('/storage/emulated/0/Documents/AttendanceApp');
+    } else {
+      directory = Directory(
+        p.join(
+          (await getApplicationDocumentsDirectory()).path,
+          "AttendanceApp",
+        ),
+      );
+    }
+
+    if (!await directory.exists()) {
+      await directory.create(recursive: true);
+    }
+    return directory;
+  }
 
   Future<bool?> _showRestoreConfirmationDialog() async {
     return await showDialog<bool>(
@@ -91,47 +111,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (!await _checkStoragePermissions()) {
         setState(() {
           _isBackingUp = false;
-          _backupStatus =
-              "Permission d'accès au stockage refusée. Veuillez autoriser l'accès dans les paramètres de l'application.";
+          _backupStatus = "Permission d'accès au stockage refusée";
         });
         return;
       }
 
-      final String? directoryPath = await FilePicker.platform.getDirectoryPath(
-        dialogTitle: "Choisissez le dossier de sauvegarde",
-      );
-
+      final backupDir = await _getAppBackupDirectory();
       final dbPath = await DbService.getDatabasePath();
       final dbFile = File(dbPath);
 
       if (!await dbFile.exists()) {
         setState(() {
           _isBackingUp = false;
-          _backupStatus = "Fichier de base de données introuvable.";
+          _backupStatus = "Fichier de base de données introuvable";
         });
         return;
       }
 
-      String backupPath;
-      if (directoryPath == null) {
-        final downloadsDir = await getExternalStorageDirectory();
-        if (downloadsDir == null) {
-          setState(() {
-            _isBackingUp = false;
-            _backupStatus =
-                "Impossible d'accéder au dossier de téléchargement.";
-          });
-          return;
-        }
-        backupPath = '${downloadsDir.path}/attendance_backup.db';
-      } else {
-        backupPath = '$directoryPath/attendance_backup.db';
-      }
+      final now = DateTime.now();
+      final formattedDate = DateFormat('dd-MM-yyyy_HH:mm').format(now);
+      final backupPath = p.join(
+        backupDir.path,
+        'attendance_app_db_$formattedDate.db',
+      );
 
       await dbFile.copy(backupPath);
       setState(() {
         _isBackingUp = false;
-        _backupStatus = "Sauvegarde réussie à : $backupPath";
+        _backupStatus = "Sauvegarde réussie dans le dossier AttendanceApp";
       });
     } catch (e) {
       setState(() {
@@ -147,32 +154,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _backupStatus = null;
     });
 
-    bool isConnected = await _checkInternetConnection();
-    if (!isConnected) {
-      setState(() {
-        _isBackingUpToGoogleDrive = false;
-        _backupStatus =
-            "Connexion internet requise pour accéder à Google Drive";
-      });
-      return;
-    }
-
     try {
+      if (!await _checkInternetConnection()) {
+        setState(() {
+          _isBackingUpToGoogleDrive = false;
+          _backupStatus =
+              "Connexion internet requise pour accéder à Google Drive";
+        });
+        return;
+      }
+
       final dbPath = await DbService.getDatabasePath();
-      final String? drivePath = await GoogleDriveService.backupFileToDrive(
+      final formattedDate = DateFormat(
+        'dd-MM-yyyy_HH:mm',
+      ).format(DateTime.now());
+      final fileName = 'attendance_app_db_$formattedDate.db';
+
+      final String? driveFileId = await GoogleDriveService.backupFileToDrive(
         dbPath,
+        fileName: fileName,
       );
 
       setState(() {
         _isBackingUpToGoogleDrive = false;
-        _backupStatus = drivePath != null
-            ? "Sauvegarde sur Google Drive réussie"
-            : "Échec de la sauvegarde sur Google Drive";
+        if (driveFileId != null && driveFileId.startsWith('Erreur')) {
+          _backupStatus = driveFileId;
+        } else {
+          _backupStatus = driveFileId != null
+              ? "Sauvegarde sur Google Drive réussie ($fileName)"
+              : "Échec de la sauvegarde sur Google Drive";
+        }
       });
     } catch (e) {
       setState(() {
         _isBackingUpToGoogleDrive = false;
-        _backupStatus = "Erreur lors de la sauvegarde sur Google Drive: $e";
+        _backupStatus =
+            "Erreur lors de la sauvegarde sur Google Drive: ${e.toString()}";
       });
     }
   }
@@ -202,7 +219,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       final String autoBackupPath = await _autoBackupBeforeImport();
       if (autoBackupPath.isNotEmpty) {
-        _backupStatus = "Sauvegarde automatique effectuée : $autoBackupPath";
+        _backupStatus = "Sauvegarde automatique effectuée: $autoBackupPath";
       }
 
       final Database importedDb = await openDatabase(
@@ -216,7 +233,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         setState(() {
           _isRestoringFromGoogleDrive = false;
           _backupStatus =
-              "Le schéma de la base de données importée est invalide.";
+              "Le schéma de la base de données importée est invalide";
         });
         return;
       }
@@ -225,7 +242,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       try {
         await deleteDatabase(appDbPath);
       } catch (e) {
-        developer.log('Erreur suppression ancienne base : $e');
+        developer.log('Erreur suppression ancienne base: $e');
       }
       await File(backupPath).copy(appDbPath);
 
@@ -255,110 +272,131 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (!await _checkStoragePermissions()) {
         setState(() {
           _isImporting = false;
-          _backupStatus =
-              "Permission d'accès au stockage refusée. Veuillez autoriser l'accès dans les paramètres de l'application.";
+          _backupStatus = "Permission d'accès au stockage refusée";
         });
+        await _openAppSettings();
         return;
       }
 
-      final FilePickerResult? result = await FilePicker.platform.pickFiles(
-        dialogTitle: "Sélectionnez la base de données à importer",
-        type: FileType.any,
-      );
+      final backupDir = await _getAppBackupDirectory();
+      final backupFiles =
+          (await backupDir.list().toList())
+              .whereType<File>()
+              .where(
+                (f) =>
+                    p.basename(f.path).startsWith("attendance_app_db_") &&
+                    p.extension(f.path) == ".db",
+              )
+              .toList()
+            ..sort(
+              (a, b) => b.statSync().modified.compareTo(a.statSync().modified),
+            );
 
-      if (result == null || result.files.single.path == null) {
-        setState(() {
-          _isImporting = false;
-          _backupStatus = "Import annulé.";
-        });
-        return;
-      }
-
-      final String importPath = result.files.single.path!;
-
-      await DbService.forceCloseDatabase();
-
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      final String backupPath = await _autoBackupBeforeImport();
-      if (backupPath.isNotEmpty) {
-        _backupStatus = "Sauvegarde automatique effectuée : $backupPath";
-      }
-
-      final Database importedDb = await openDatabase(
-        importPath,
-        readOnly: true,
-      );
-      final bool schemaValid = await _validateDatabaseSchema(importedDb);
-      await importedDb.close();
-
-      if (!schemaValid) {
+      if (backupFiles.isEmpty) {
         setState(() {
           _isImporting = false;
           _backupStatus =
-              "Le schéma de la base de données importée est invalide.";
+              "Aucune sauvegarde disponible dans le dossier AttendanceApp";
         });
         return;
       }
 
-      final appDbPath = await DbService.getDatabasePath();
+      final File? selectedFile = await showDialog<File>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Choisir une sauvegarde à restaurer'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: min(backupFiles.length, 5),
+                itemBuilder: (context, index) {
+                  final file = backupFiles[index];
+                  return ListTile(
+                    title: Text(p.basename(file.path)),
+                    onTap: () => Navigator.of(context).pop(file),
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Annuler'),
+              ),
+            ],
+          );
+        },
+      );
 
+      if (selectedFile == null) {
+        setState(() {
+          _isImporting = false;
+          _backupStatus = "Restauration annulée";
+        });
+        return;
+      }
+
+      final String autoBackupPath = await _autoBackupBeforeImport();
+      if (autoBackupPath.isNotEmpty) {
+        developer.log('Sauvegarde automatique créée: $autoBackupPath');
+      }
+
+      Database? importedDb;
       try {
-        await deleteDatabase(appDbPath);
-      } catch (e) {
-        try {
-          final file = File(appDbPath);
-          if (await file.exists()) {
-            await file.delete();
-          }
-        } catch (e) {
+        importedDb = await openDatabase(selectedFile.path, readOnly: true);
+        final bool schemaValid = await _validateDatabaseSchema(importedDb);
+        if (!schemaValid) {
           setState(() {
             _isImporting = false;
-            _backupStatus =
-                "Impossible de supprimer l'ancienne base de données. Fermez l'application et réessayez.";
+            _backupStatus = "Le format de la sauvegarde est incompatible";
           });
           return;
         }
+      } finally {
+        await importedDb?.close();
       }
 
+      final appDbPath = await DbService.getDatabasePath();
       try {
-        final importFile = File(importPath);
-        await importFile.copy(appDbPath);
+        await DbService.forceCloseDatabase();
+        await Future.delayed(const Duration(milliseconds: 300));
 
+        if (await File(appDbPath).exists()) {
+          await deleteDatabase(appDbPath);
+        }
+
+        await selectedFile.copy(appDbPath);
         await DbService.getDatabase();
 
         setState(() {
           _isImporting = false;
-          _backupStatus =
-              "Importation réussie ! La base de données a été remplacée.";
+          _backupStatus = "Restauration réussie !";
         });
       } catch (e) {
         setState(() {
           _isImporting = false;
-          _backupStatus = "Erreur lors de la copie du fichier : $e";
+          _backupStatus = "Échec de la restauration: ${e.toString()}";
         });
       }
     } catch (e) {
       setState(() {
         _isImporting = false;
-        _backupStatus = "Erreur lors de l'import : $e";
+        _backupStatus = "Erreur: ${e.toString()}";
       });
     }
   }
 
   Future<bool> _checkStoragePermissions() async {
     if (Platform.isAndroid) {
-      //vérifier et demander MANAGE_EXTERNAL_STORAGE pour Android 11+
       if (await Permission.manageExternalStorage.isDenied) {
         await Permission.manageExternalStorage.request();
       }
-
-      //vérifier et demander les permissions standard pour les autres versions
       if (await Permission.storage.isDenied) {
         await Permission.storage.request();
       }
 
-      //vérifier les permissions accordées
       final manageStatus = await Permission.manageExternalStorage.status;
       final storageStatus = await Permission.storage.status;
 
