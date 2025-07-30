@@ -4,12 +4,21 @@ import 'package:attendance_app/features/event_organization/models/event_particip
 import 'package:attendance_app/services/event_participant_table_service.dart';
 import 'package:attendance_app/services/app_db_service.dart';
 import 'package:attendance_app/services/db_service.dart';
+import 'package:attendance_app/services/member_table_service.dart';
+import 'package:attendance_app/features/member/models/member.dart';
 import 'dart:async';
 
 class EventParticipantsTable extends StatefulWidget {
   final String eventOrganizationId;
+  final String searchQuery;
+  final Function(int present, int absent)? onStatsChanged;
 
-  const EventParticipantsTable({super.key, required this.eventOrganizationId});
+  const EventParticipantsTable({
+    super.key,
+    required this.eventOrganizationId,
+    this.searchQuery = '',
+    this.onStatsChanged,
+  });
 
   @override
   State<EventParticipantsTable> createState() => _EventParticipantsTableState();
@@ -19,6 +28,9 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
   late Future<List<EventParticipant>> _participantsFuture;
   DateTime? _eventDate;
   bool _isLoading = true;
+  Map<String, Member> _membersCache = {};
+  int _presentCount = 0;
+  int _absentCount = 0;
 
   @override
   void initState() {
@@ -56,12 +68,41 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
 
     setState(() {
       _isLoading = true;
-      _participantsFuture =
-          EventParticipantTableService.getByEventOrganizationId(
-            widget.eventOrganizationId,
-            eventDate: _eventDate!,
-          ).whenComplete(() => setState(() => _isLoading = false));
+      _participantsFuture = _loadParticipantsWithMembers();
     });
+  }
+
+  Future<List<EventParticipant>> _loadParticipantsWithMembers() async {
+    final participants =
+        await EventParticipantTableService.getByEventOrganizationId(
+          widget.eventOrganizationId,
+          eventDate: _eventDate!,
+        );
+
+    _presentCount = participants.where((p) => p.isPresent).length;
+    _absentCount = participants.length - _presentCount;
+    widget.onStatsChanged?.call(_presentCount, _absentCount);
+
+    final memberIds = participants.map((p) => p.individualId).toList();
+    final members = await MemberTableService.getAllMembers();
+    _membersCache = {
+      for (var m in members.where((m) => memberIds.contains(m.id))) m.id: m,
+    };
+
+    return participants;
+  }
+
+  List<EventParticipant> _filterParticipants(
+    List<EventParticipant> participants,
+  ) {
+    if (widget.searchQuery.isEmpty) return participants;
+
+    return participants.where((participant) {
+      final member = _membersCache[participant.individualId];
+      if (member == null) return false;
+      final fullName = '${member.firstName} ${member.lastName}'.toLowerCase();
+      return fullName.contains(widget.searchQuery.toLowerCase());
+    }).toList();
   }
 
   void _addParticipant() async {
@@ -208,6 +249,8 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
             isPresent: false,
           ),
         );
+        _absentCount++;
+        widget.onStatsChanged?.call(_presentCount, _absentCount);
         _refresh();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -217,7 +260,7 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
     }
   }
 
-  void _removeParticipant(EventParticipant participant) async {
+  Future<void> _removeParticipant(EventParticipant participant) async {
     final member = await DbService.getByField(
       tableName: 'members',
       field: 'id',
@@ -274,45 +317,32 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
         participant.eventOrganizationId,
         participant.individualId,
       );
+
+      if (participant.isPresent) {
+        _presentCount--;
+      } else {
+        _absentCount--;
+      }
+      widget.onStatsChanged?.call(_presentCount, _absentCount);
       _refresh();
     }
   }
 
-  void _togglePresence(EventParticipant participant) async {
+  Future<void> _togglePresence(EventParticipant participant) async {
     participant.isPresent = !participant.isPresent;
     await EventParticipantTableService.update(participant);
-    _refresh();
-  }
 
-  Future<String> _getMemberFullName(String memberId) async {
-    final db = await AppDbService.database;
-    final result = await db.query(
-      'members',
-      columns: ['firstName', 'lastName', 'isHidden', 'hiddenAt'],
-      where: 'id = ?',
-      whereArgs: [memberId],
-      limit: 1,
-    );
-
-    if (result.isNotEmpty) {
-      final prenom = result.first['firstName'] ?? '';
-      final nom = result.first['lastName'] ?? '';
-      final isHidden = result.first['isHidden'] == 1;
-      final hiddenAt = result.first['hiddenAt'] != null
-          ? DateTime.tryParse(result.first['hiddenAt'] as String)
-          : null;
-
-      String name = '$prenom $nom'.trim();
-      if (isHidden && hiddenAt != null) {
-        name +=
-            ' (Supprimé ${DateService.formatFr(hiddenAt, withHour: false)})';
-      } else if (isHidden) {
-        name += ' (Supprimé)';
+    setState(() {
+      if (participant.isPresent) {
+        _presentCount++;
+        _absentCount--;
+      } else {
+        _presentCount--;
+        _absentCount++;
       }
+    });
 
-      return name;
-    }
-    return memberId;
+    widget.onStatsChanged?.call(_presentCount, _absentCount);
   }
 
   @override
@@ -358,9 +388,16 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
               }
 
               final participants = snapshot.data ?? [];
+              final filteredParticipants = _filterParticipants(participants);
 
-              if (participants.isEmpty) {
-                return const Center(child: Text('Aucun participant'));
+              if (filteredParticipants.isEmpty) {
+                return Center(
+                  child: Text(
+                    widget.searchQuery.isEmpty
+                        ? 'Aucun participant'
+                        : 'Aucun résultat trouvé',
+                  ),
+                );
               }
 
               return Padding(
@@ -378,33 +415,25 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
                         DataColumn(label: Text('Présent')),
                         DataColumn(label: Text('Actions')),
                       ],
-                      rows: participants.map((p) {
+                      rows: filteredParticipants.map((p) {
+                        final member = _membersCache[p.individualId];
+                        final displayName = member != null
+                            ? '${member.firstName} ${member.lastName}'
+                            : p.individualId;
+
                         return DataRow(
                           cells: [
                             DataCell(
-                              FutureBuilder<String>(
-                                future: _getMemberFullName(p.individualId),
-                                builder: (context, snap) {
-                                  if (snap.connectionState ==
-                                      ConnectionState.waiting) {
-                                    return const SizedBox(
-                                      width: 60,
-                                      height: 12,
-                                      child: LinearProgressIndicator(),
-                                    );
-                                  }
-                                  return Text(
-                                    snap.data ?? p.individualId,
-                                    style: p.isHidden
-                                        ? TextStyle(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.error,
-                                            fontStyle: FontStyle.italic,
-                                          )
-                                        : null,
-                                  );
-                                },
+                              Text(
+                                displayName,
+                                style: p.isHidden
+                                    ? TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.error,
+                                        fontStyle: FontStyle.italic,
+                                      )
+                                    : null,
                               ),
                             ),
                             DataCell(
