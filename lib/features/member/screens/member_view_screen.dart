@@ -177,6 +177,14 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                       _buildInfoRow('Nom', member.lastName),
                       _buildInfoRow('Prénom', member.firstName),
                       _buildInfoRow(
+                        'Contact',
+                        member.contact ?? 'Non spécifié',
+                      ),
+                      _buildInfoRow(
+                        'Description',
+                        member.description ?? 'Non spécifiée',
+                      ),
+                      _buildInfoRow(
                         'Date de naissance',
                         member.birthDate != null
                             ? '${member.birthDate?.day}/${member.birthDate?.month}/${member.birthDate?.year}'

@@ -5,6 +5,8 @@ class Member {
   final String id;
   String firstName;
   String lastName;
+  String? contact;
+  String? description;
   DateTime? birthDate;
   bool isHidden;
   DateTime? hiddenAt;
@@ -13,6 +15,8 @@ class Member {
     required this.id,
     required this.firstName,
     required this.lastName,
+    this.contact,
+    this.description,
     this.birthDate,
     this.isHidden = false,
     this.hiddenAt,
@@ -29,6 +33,8 @@ class Member {
       'id': id,
       'firstName': firstName,
       'lastName': lastName,
+      'contact': contact,
+      'description': description,
       'birthDate': birthDate?.toIso8601String(),
       'isHidden': isHidden ? 1 : 0,
       'hiddenAt': hiddenAt?.toIso8601String(),
@@ -60,6 +66,8 @@ class Member {
       id: map['id'],
       firstName: map['firstName'],
       lastName: map['lastName'],
+      contact: map['contact'],
+      description: map['description'],
       birthDate: birthDate,
       isHidden: map['isHidden'] == 1,
       hiddenAt: hiddenAt,
@@ -79,7 +87,6 @@ class Member {
     for (final format in possibleFormats) {
       try {
         final date = DateFormat(format).parse(cleaned);
-
         return date;
       } catch (e) {
         debugPrint('Failed to parse with $format: $e');
