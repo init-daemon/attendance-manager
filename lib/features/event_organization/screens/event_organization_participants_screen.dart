@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:attendance_app/features/event_organization/widgets/event_participants_table.dart';
 import 'package:attendance_app/features/event_organization/models/event_organization.dart';
-import 'package:attendance_app/features/event_organization/models/event_participant.dart';
 import 'package:attendance_app/services/event_table_service.dart';
 import 'package:attendance_app/services/date_service.dart';
 import 'package:attendance_app/core/widgets/app_layout.dart';
-import 'package:attendance_app/services/event_participant_table_service.dart';
-import 'package:attendance_app/services/member_table_service.dart';
 
 class EventOrganizationParticipantsScreen extends StatefulWidget {
   final String eventOrganizationId;
@@ -26,19 +23,8 @@ class EventOrganizationParticipantsScreen extends StatefulWidget {
 class _EventOrganizationParticipantsScreenState
     extends State<EventOrganizationParticipantsScreen> {
   String _searchQuery = '';
-
-  Future<Map<String, int>> _getAttendanceStats(
-    List<EventParticipant> participants,
-  ) async {
-    final presentCount = participants.where((p) => p.isPresent).length;
-    final absentCount = participants.length - presentCount;
-
-    return {
-      'present': presentCount,
-      'absent': absentCount,
-      'total': participants.length,
-    };
-  }
+  int _presentCount = 0;
+  int _absentCount = 0;
 
   Widget _buildAttendanceStatsBar(int present, int absent, int total) {
     return Container(
@@ -197,45 +183,10 @@ class _EventOrganizationParticipantsScreenState
                         },
                       ),
                       const SizedBox(height: 16),
-                      FutureBuilder<List<EventParticipant>?>(
-                        future:
-                            EventParticipantTableService.getByEventOrganizationId(
-                              widget.eventOrganizationId,
-                              includeHidden: true,
-                            ),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-                          if (snapshot.hasError || !snapshot.hasData) {
-                            return const SizedBox();
-                          }
-
-                          return FutureBuilder<Map<String, int>>(
-                            future: _getAttendanceStats(snapshot.data!),
-                            builder: (context, statsSnapshot) {
-                              if (statsSnapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              }
-                              if (statsSnapshot.hasError ||
-                                  !statsSnapshot.hasData) {
-                                return const SizedBox();
-                              }
-
-                              return _buildAttendanceStatsBar(
-                                statsSnapshot.data!['present'] ?? 0,
-                                statsSnapshot.data!['absent'] ?? 0,
-                                statsSnapshot.data!['total'] ?? 0,
-                              );
-                            },
-                          );
-                        },
+                      _buildAttendanceStatsBar(
+                        _presentCount,
+                        _absentCount,
+                        _presentCount + _absentCount,
                       ),
                     ],
                   ),
@@ -248,6 +199,12 @@ class _EventOrganizationParticipantsScreenState
                 child: EventParticipantsTable(
                   eventOrganizationId: widget.eventOrganizationId,
                   searchQuery: _searchQuery,
+                  onStatsChanged: (present, absent) {
+                    setState(() {
+                      _presentCount = present;
+                      _absentCount = absent;
+                    });
+                  },
                 ),
               ),
             ],

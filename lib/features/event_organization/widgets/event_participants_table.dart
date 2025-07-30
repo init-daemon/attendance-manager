@@ -11,11 +11,13 @@ import 'dart:async';
 class EventParticipantsTable extends StatefulWidget {
   final String eventOrganizationId;
   final String searchQuery;
+  final Function(int present, int absent)? onStatsChanged;
 
   const EventParticipantsTable({
     super.key,
     required this.eventOrganizationId,
     this.searchQuery = '',
+    this.onStatsChanged,
   });
 
   @override
@@ -27,6 +29,8 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
   DateTime? _eventDate;
   bool _isLoading = true;
   Map<String, Member> _membersCache = {};
+  int _presentCount = 0;
+  int _absentCount = 0;
 
   @override
   void initState() {
@@ -74,6 +78,10 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
           widget.eventOrganizationId,
           eventDate: _eventDate!,
         );
+
+    _presentCount = participants.where((p) => p.isPresent).length;
+    _absentCount = participants.length - _presentCount;
+    widget.onStatsChanged?.call(_presentCount, _absentCount);
 
     final memberIds = participants.map((p) => p.individualId).toList();
     final members = await MemberTableService.getAllMembers();
@@ -241,6 +249,8 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
             isPresent: false,
           ),
         );
+        _absentCount++;
+        widget.onStatsChanged?.call(_presentCount, _absentCount);
         _refresh();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -250,7 +260,7 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
     }
   }
 
-  void _removeParticipant(EventParticipant participant) async {
+  Future<void> _removeParticipant(EventParticipant participant) async {
     final member = await DbService.getByField(
       tableName: 'members',
       field: 'id',
@@ -307,14 +317,32 @@ class _EventParticipantsTableState extends State<EventParticipantsTable> {
         participant.eventOrganizationId,
         participant.individualId,
       );
+
+      if (participant.isPresent) {
+        _presentCount--;
+      } else {
+        _absentCount--;
+      }
+      widget.onStatsChanged?.call(_presentCount, _absentCount);
       _refresh();
     }
   }
 
-  void _togglePresence(EventParticipant participant) async {
+  Future<void> _togglePresence(EventParticipant participant) async {
     participant.isPresent = !participant.isPresent;
     await EventParticipantTableService.update(participant);
-    _refresh();
+
+    setState(() {
+      if (participant.isPresent) {
+        _presentCount++;
+        _absentCount--;
+      } else {
+        _presentCount--;
+        _absentCount++;
+      }
+    });
+
+    widget.onStatsChanged?.call(_presentCount, _absentCount);
   }
 
   @override
