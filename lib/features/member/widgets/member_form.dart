@@ -21,6 +21,8 @@ class _MemberFormState extends State<MemberForm> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
+  late TextEditingController _contactController;
+  late TextEditingController _descriptionController;
   DateTime? _birthDate;
   late bool _isHidden;
 
@@ -32,6 +34,12 @@ class _MemberFormState extends State<MemberForm> {
     );
     _lastNameController = TextEditingController(
       text: widget.member?.lastName ?? '',
+    );
+    _contactController = TextEditingController(
+      text: widget.member?.contact ?? '',
+    );
+    _descriptionController = TextEditingController(
+      text: widget.member?.description ?? '',
     );
     _birthDate = widget.member?.birthDate;
     _isHidden = widget.member?.isHidden ?? false;
@@ -62,6 +70,21 @@ class _MemberFormState extends State<MemberForm> {
               }
               return null;
             },
+          ),
+          TextFormField(
+            controller: _contactController,
+            decoration: const InputDecoration(
+              labelText: 'Contact (optionnel)',
+              hintText: 'Téléphone ou email',
+            ),
+          ),
+          TextFormField(
+            controller: _descriptionController,
+            decoration: const InputDecoration(
+              labelText: 'Description (optionnel)',
+              hintText: 'Informations supplémentaires',
+            ),
+            maxLines: 3,
           ),
           ListTile(
             title: const Text('Date de naissance (optionnel)'),
@@ -152,6 +175,12 @@ class _MemberFormState extends State<MemberForm> {
                           DateTime.now().millisecondsSinceEpoch.toString(),
                       firstName: _firstNameController.text,
                       lastName: _lastNameController.text,
+                      contact: _contactController.text.isNotEmpty
+                          ? _contactController.text
+                          : null,
+                      description: _descriptionController.text.isNotEmpty
+                          ? _descriptionController.text
+                          : null,
                       birthDate: _birthDate,
                       isHidden: _isHidden,
                     );

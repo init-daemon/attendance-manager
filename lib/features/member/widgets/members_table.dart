@@ -89,6 +89,8 @@ class MembersTable extends StatelessWidget {
             DataColumn(label: Text('Actions')),
             DataColumn(label: Text('Nom')),
             DataColumn(label: Text('Prénom')),
+            DataColumn(label: Text('Contact')),
+            DataColumn(label: Text('Description')),
             DataColumn(label: Text('Status')),
             DataColumn(label: Text('Date de naissance')),
           ],
@@ -149,6 +151,8 @@ class MembersTable extends StatelessWidget {
                 ),
                 DataCell(Text(member.lastName)),
                 DataCell(Text(member.firstName)),
+                DataCell(Text(member.contact ?? '-')),
+                DataCell(Text(member.description ?? '-')),
                 DataCell(
                   Container(
                     padding: const EdgeInsets.symmetric(

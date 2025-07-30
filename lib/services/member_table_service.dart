@@ -16,6 +16,8 @@ class MemberTableService {
         id TEXT PRIMARY KEY,
         firstName TEXT,
         lastName TEXT,
+        contact TEXT,
+        description TEXT,
         birthDate TEXT,
         isHidden INTEGER,
         hiddenAt TEXT
@@ -79,6 +81,8 @@ class MemberTableService {
       {'name': 'id', 'type': 'TEXT'},
       {'name': 'firstName', 'type': 'TEXT'},
       {'name': 'lastName', 'type': 'TEXT'},
+      {'name': 'contact', 'type': 'TEXT'},
+      {'name': 'description', 'type': 'TEXT'},
       {'name': 'birthDate', 'type': 'TEXT'},
       {'name': 'isHidden', 'type': 'INTEGER'},
       {'name': 'hiddenAt', 'type': 'TEXT'},
@@ -177,10 +181,22 @@ class MemberTableService {
             continue;
           }
 
+          String? contact;
+          if (row.length >= 3) {
+            contact = row[2]?.value?.toString().trim();
+            if (contact?.isEmpty ?? true) contact = null;
+          }
+
+          String? description;
+          if (row.length >= 4) {
+            description = row[3]?.value?.toString().trim();
+            if (description?.isEmpty ?? true) description = null;
+          }
+
           DateTime? birthDate;
 
-          if (row.length >= 3) {
-            final dateValue = (row[2]?.value.toString() ?? '').trim();
+          if (row.length >= 5) {
+            final dateValue = (row[4]?.value.toString() ?? '').trim();
 
             if (dateValue is DateTime) {
               birthDate = DateTime.tryParse(dateValue);
@@ -216,6 +232,8 @@ class MemberTableService {
             id: '${DateTime.now().millisecondsSinceEpoch}_$i',
             firstName: firstName,
             lastName: lastName,
+            contact: contact,
+            description: description,
             birthDate: birthDate,
             isHidden: false,
             hiddenAt: null,
